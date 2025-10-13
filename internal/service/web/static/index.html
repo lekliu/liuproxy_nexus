@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LiuProxy Local Config</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>LiuProxy Dashboard</h1>
+            <nav>
+                <a href="#" id="nav-dashboard" class="nav-link active">Dashboard</a>
+                <a href="#" id="nav-servers" class="nav-link">Serverss</a>
+                <a href="#" id="nav-gateway" class="nav-link">Gateway</a>
+                <a href="#" id="nav-routing" class="nav-link">Routing</a>
+                <a href="#" id="nav-firewall" class="nav-link">Firewall</a>
+                <a href="#" id="nav-monitor" class="nav-link">Monitor</a>
+            </nav>
+        </header>
+         <div id="apply-changes-banner" class="apply-banner" style="display: none;">
+            <span>Configuration has been changed.</span>
+            <button id="apply-changes-btn" class="save-btn">Apply Changes</button>
+        </div>
+        <main id="main-dashboard">
+            <div class="dashboard-stats-grid">
+                <div class="stat-card">
+                    <h3>Active Connections</h3>
+                    <p id="stat-active-connections">--</p>
+                </div>
+                <div class="stat-card">
+                    <h3>Upload Rate</h3>
+                    <p id="stat-uplink-rate">-- kB/s</p>
+                </div>
+                <div class="stat-card">
+                    <h3>Download Rate</h3>
+                    <p id="stat-downlink-rate">-- kB/s</p>
+                </div>
+            </div>
+            <div class="chart-container">
+                <canvas id="traffic-chart"></canvas>
+            </div>
+        </main>
+         <main id="main-servers" style="display: none;">
+            <div class="main-header">
+                <h2>Server Management</h2>
+                <div class="filter-controls">
+                    <input type="text" id="server-filter-input" placeholder="Filter by remarks or address...">
+                </div>
+                <button id="add-server-btn">Add New Server</button>
+            </div>
+            <table id="server-table">
+                <thead>
+                    <tr>
+                        <th>Status</th>
+                        <th data-sortable="true" id="remarks-header">Remarks <span class="sort-indicator"></span></th>
+                        <th>Address</th>
+                        <th data-sortable="true" id="latency-header">Latency <span class="sort-indicator"></span></th>
+                        <th>Activity</th>
+                        <th>Exit IP</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="server-list"></tbody>
+            </table>
+        </main>
+
+        <!-- Gateway Settings Page -->
+        <main id="main-gateway" style="display: none;">
+            <div class="main-header">
+                <h2>Gateway Settings</h2>
+            </div>
+            <form id="gateway-settings-form">
+                 <!-- 新增：部署配置卡片 -->
+                <div class="settings-card">
+                    <h3>Deployment Configuration (Read-Only)</h3>
+                    <div class="form-row">
+                        <label>TCP Transparent Proxy</label>
+                        <input type="text" id="env-tcp-enabled" readonly disabled>
+                    </div>
+                    <div class="form-row">
+                        <label>UDP Transparent Proxy</label>
+                        <input type="text" id="env-udp-enabled" readonly disabled>
+                    </div>
+                    <div class="form-row">
+                        <label>Transparent Proxy Port</label>
+                        <input type="text" id="env-tproxy-port" readonly disabled>
+                    </div>
+                    <div class="form-row">
+                        <label>Excluded IPs (Direct)</label>
+                        <textarea id="env-excluded-ips" rows="3" readonly disabled></textarea>
+                    </div>
+                    <div class="form-hint">
+                        <p>These settings define the container's core network behavior and are controlled by environment variables.</p>
+                        <p>To modify them, please edit your <code>docker-compose.yml</code> file and restart the container.</p>
+                    </div>
+                </div>
+                <div class="settings-card">
+                    <h3>Sticky Session</h3>
+                    <div class="form-row">
+                        <label for="sticky_session_mode">Mode</label>
+                        <div class="radio-group">
+                            <input type="radio" id="sticky-disabled" name="sticky_session_mode" value="disabled"><label for="sticky-disabled">Disabled</label>
+                            <input type="radio" id="sticky-global" name="sticky_session_mode" value="global"><label for="sticky-global">Global</label>
+                            <input type="radio" id="sticky-conditional" name="sticky_session_mode" value="conditional"><label for="sticky-conditional">Conditional</label>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <label for="sticky_session_ttl">TTL (seconds)</label>
+                        <input type="number" id="sticky_session_ttl" name="sticky_session_ttl">
+                    </div>
+                    <div class="form-row">
+                        <label for="sticky_rules">Conditional Rules</label>
+                        <div>
+                            <textarea id="sticky_rules" name="sticky_rules" rows="4" placeholder="*.example.com&#10;api.service.net"></textarea>
+                            <div class="form-hint">One domain pattern per line.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="settings-card">
+                    <h3>Load Balancer</h3>
+                     <div class="form-row">
+                        <label for="load_balancer_strategy">Default Strategy</label>
+                        <select id="load_balancer_strategy" name="load_balancer_strategy">
+                            <option value="least_connections">Least Connections</option>
+                            <option value="round_robin">Round Robin</option>
+                        </select>
+                     </div>
+                </div>
+
+                <div class="form-row">
+                    <label></label>
+                    <button type="button" class="save-btn" data-module="gateway">Save Gateway Settings</button>
+                </div>
+            </form>
+        </main>
+
+        <!-- Routing Rules Page -->
+        <main id="main-routing" style="display: none;">
+             <div class="main-header">
+                <h2>Routing Rules</h2>
+             </div>
+             <form id="routing-settings-form">
+                <div class="settings-card">
+                    <div class="main-header">
+                         <h4>Rule List</h4>
+                         <div class="filter-controls">
+                             <input type="text" id="rule-value-filter" placeholder="Filter by value...">
+                             <select id="rule-type-filter">
+                                 <option value="all">All Types</option>
+                                 <option value="domain">Domain</option>
+                                 <option value="source_ip">Source IP</option>
+                                 <option value="dest_ip">Destination IP</option>
+                             </select>
+                             <button type="button" id="add-rule-btn">Add Rule</button>
+                         </div>
+                    </div>
+                    <table id="rules-table">
+                        <thead>
+                            <tr>
+                                <th data-sortable="true" id="priority-header">Priority <span id="priority-sort-indicator" class="sort-indicator"></span></th>
+                                <th>Type</th>
+                                <th>Value</th>
+                                <th>Target</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="rule-list-body"></tbody>
+                    </table>
+                     <div class="form-row" style="margin-top: 20px;">
+                        <label></label>
+                        <button type="button" class="save-btn" data-module="routing">Save All Routing Changes</button>
+                    </div>
+                </div>
+             </form>
+        </main>
+
+        <main id="main-firewall" style="display: none;">
+            <div class="main-header">
+                <h2>Firewall Rules</h2>
+            </div>
+            <form id="firewall-settings-form">
+                <div class="settings-card">
+                     <div class="form-row">
+                        <label for="firewall-enabled">Firewall Status</label>
+                        <div class="radio-group">
+                            <input type="radio" id="firewall-enabled-true" name="firewall_enabled" value="true"><label for="firewall-enabled-true">Enabled</label>
+                            <input type="radio" id="firewall-enabled-false" name="firewall_enabled" value="false"><label for="firewall-enabled-false">Disabled</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="settings-card">
+                    <div class="main-header">
+                         <h4>Rule List</h4>
+                         <button type="button" id="add-firewall-rule-btn">Add Firewall Rule</button>
+                    </div>
+                    <table id="firewall-rules-table">
+                        <thead>
+                            <tr>
+                                <th>Priority</th>
+                                <th>Action</th>
+                                <th>Protocol</th>
+                                <th>Source CIDR</th>
+                                <th>Destination CIDR</th>
+                                <th>Destination Port</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="firewall-rule-list-body"></tbody>
+                    </table>
+                </div>
+                 <div class="form-row" style="margin-top: 20px;">
+                    <label></label>
+                    <button type="button" class="save-btn" data-module="firewall">Save Firewall Settings</button>
+                </div>
+            </form>
+        </main>
+
+        <!-- Monitor Page -->
+        <main id="main-monitor" style="display: none;">
+            <div class="main-header">
+                <h2>Live Traffic Monitor</h2>
+                <div class="filter-controls">
+                     <button type="button" id="monitor-pause-btn">Pause</button>
+                     <button type="button" id="monitor-clear-btn">Clear</button>
+                </div>
+            </div>
+            <table id="monitor-table">
+                <thead>
+                    <tr>
+                        <th>Timestamp</th>
+                        <th>Client IP</th>
+                        <th>Protocol</th>
+                        <th>Destination</th>
+                        <th>Action</th>
+                        <th>Target</th>
+                    </tr>
+                </thead>
+                <tbody id="monitor-log-body"></tbody>
+            </table>
+        </main>
+
+        <section id="log-panel" class="log-panel">
+            <div class="log-panel-header">
+                <h2>System Log</h2>
+                <button id="clear-log-btn">Clear Log</button>
+            </div>
+            <pre id="log-content">Initializing...</pre>
+        </section>
+    </div>
+
+    <dialog id="server-dialog">
+        <form id="server-form">
+            <h2 id="dialog-title">Add Server</h2>
+            <input type="hidden" id="server-id" name="id">
+
+            <div class="form-row"><label for="remarks">Remarks</label><input type="text" id="remarks" name="remarks" required></div>
+
+            <div class="form-row"><label for="type">Backend Type</label>
+                <select id="type" name="type">
+                    <option value="goremote">Go Remote</option>
+                    <option value="worker">Cloudflare Worker</option>
+                    <option value="vless">VLESS</option>
+                    <option value="http">HTTP Proxy</option>
+                </select>
+            </div>
+
+            <div class="form-row"><label for="address">Server Address</label><input type="text" id="address" name="address" required></div>
+            <div class="form-row"><label for="port">Server Port</label><input type="number" id="port" name="port" required></div>
+
+            <div id="http-fields" class="form-section type-specific-fields">
+                <hr><p class="fields-title">HTTP Proxy Settings</p>
+                <div class="form-row"><label for="username">Username (Optional)</label><input type="text" id="username" name="username"></div>
+                <div class="form-row"><label for="password">Password (Optional)</label><input type="password" id="password" name="password"></div>
+            </div>
+
+            <div id="goremote-fields" class="form-section type-specific-fields">
+                <hr><p class="fields-title">GoRemote Settings</p>
+                <div class="form-row">
+                    <label for="transport">Transport</label>
+                    <select id="transport" name="transport">
+                        <option value="tcp">TCP (High Performance)</option>
+                        <option value="ws">WebSocket (High Compatibility)</option>
+                    </select>
+                </div>
+                <div class="form-row" id="multiplex-row">
+                    <label for="multiplex">Multiplexing</label>
+                    <div>
+                        <input type="checkbox" id="multiplex" name="multiplex" style="width: auto;">
+                        <span class="form-hint" style="margin-left: 10px;">Enabled automatically for WebSocket.</span>
+                    </div>
+                </div>
+            </div>
+
+            <div id="common-ws-fields" class="form-section">
+                <hr><p class="fields-title">WebSocket Settings</p>
+                <div class="form-row"><label for="scheme">Scheme</label><select id="scheme" name="scheme"><option value="ws">ws</option><option value="wss">wss</option></select></div>
+                <div class="form-row"><label for="path">Path</label><input type="text" id="path" name="path" value="/" required></div>
+                <div class="form-row"><label for="host">Host Header (For CDN)</label><input type="text" id="host" name="host"></div>
+            </div>
+
+            <div id="vless-fields" class="form-section type-specific-fields">
+                <hr><p class="fields-title">VLESS Settings</p>
+                <div class="form-row"><label for="uuid">UUID</label><input type="text" id="uuid" name="uuid"></div>
+
+                <div class="form-row">
+                    <label for="network">传输协议 (Network)</label>
+                    <select id="network" name="network">
+                        <option value="ws" selected>ws (WebSocket)</option>
+                        <option value="grpc">grpc</option>
+                    </select>
+                </div>
+                <div id="vless-grpc-fields">
+                    <div class="form-row">
+                        <label for="grpcMode">gRPC 传输模式 (Mode)</label>
+                        <input type="text" id="grpcMode" name="grpcMode" value="gun" placeholder="gun / multi">
+                    </div>
+                    <div class="form-row">
+                        <label for="grpcAuthority">gRPC Authority (Host)</label>
+                        <input type="text" id="grpcAuthority" name="grpcAuthority" placeholder="Defaults to SNI if empty">
+                    </div>
+                    <div class="form-row">
+                        <label for="grpcServiceName">gRPC ServiceName</label>
+                        <input type="text" id="grpcServiceName" name="grpcServiceName" placeholder="e.g., your.service.name">
+                    </div>
+                </div>
+
+                <div class="form-row"><label for="security">Security</label><select id="security" name="security"><option value="tls">tls</option><option value="reality">reality</option><option value="none">none</option></select></div>
+                <div class="form-row"><label for="flow">Flow</label><input type="text" id="flow" name="flow" placeholder="e.g., xtls-rprx-vision"></div>
+                <div class="form-row" id="sni-wrapper"><label for="sni">SNI</label><input type="text" id="sni" name="sni"></div>
+                <div class="form-row" id="fingerprint-wrapper"><label for="fingerprint">uTLS Fingerprint</label><select id="fingerprint" name="fingerprint"><option value="chrome">chrome</option><option value="firefox">firefox</option><option value="safari">safari</option><option value="ios">ios</option><option value="android">android</option><option value="random">random</option><option value="randomized">randomized</option></select></div>
+                <div class="form-row" id="publicKey-wrapper"><label for="publicKey">REALITY Public Key</label><input type="text" id="publicKey" name="publicKey"></div>
+                <div class="form-row" id="shortId-wrapper"><label for="shortId">REALITY Short ID</label><input type="text" id="shortId" name="shortId"></div>
+            </div>
+
+            <div id="worker-fields" class="form-section type-specific-fields">
+                <hr><p class="fields-title">Worker Settings</p>
+                <div class="form-row"><label for="edgeIP">Edge IP (Optional)</label><input type="text" id="edgeIP" name="edgeIP"></div>
+            </div>
+
+            <div class="form-row"><label></label><div class="dialog-actions"><button type="button" id="cancel-btn">Cancel</button><button type="submit">Save</button></div></div>
+        </form>
+    </dialog>
+
+    <!-- 规则编辑对话框 -->
+    <dialog id="rule-dialog">
+        <form id="rule-form">
+            <h2 id="rule-dialog-title">Add Rule</h2>
+            <input type="hidden" id="rule-index" name="rule-index"> <!-- Use index for editing -->
+            <div class="form-row">
+                <label for="rule-priority">Priority</label>
+                <input type="number" id="rule-priority" name="priority" value="99" required title="Lower number means higher priority.">
+            </div>
+            <div class="form-row">
+                <label for="rule-type">Rule Type</label>
+                <select id="rule-type" name="type" required>
+                    <option value="domain">Domain</option>
+                    <option value="source_ip">Source IP/CIDR</option>
+                    <option value="dest_ip">Destination IP/CIDR</option>
+                </select>
+            </div>
+            <div class="form-row">
+                <label for="rule-value">Value</label>
+                <div class="value-input-group">
+                    <textarea id="rule-value" name="value" rows="5"
+                              placeholder="e.g., *.google.com&#10;192.168.1.0/24&#10;... (one entry per line)"
+                              required></textarea>
+                    <button type="button" id="fetch-clients-btn" class="small-btn"
+                            title="Fetch online client IPs that are not yet in any rule.">Fetch Client IPs
+                    </button>
+                    <button type="button" id="fetch-targets-btn" class="small-btn"
+                            title="Fetch recently accessed domains/IPs.">Fetch Recent
+                    </button>
+                </div>
+            </div>
+            <div class="form-row">
+                <label for="rule-target">Target</label>
+                <select id="rule-target" name="target" required>
+                    <!-- Options will be dynamically populated with server remarks -->
+                </select>
+            </div>
+            <div class="form-row">
+                <label></label>
+                <div class="dialog-actions">
+                    <button type="button" id="cancel-rule-btn">Cancel</button>
+                    <button type="submit">Save Rule</button>
+                </div>
+            </div>
+        </form>
+    </dialog>
+
+    <dialog id="firewall-rule-dialog">
+        <form id="firewall-rule-form">
+            <h2 id="firewall-rule-dialog-title">Add Firewall Rule</h2>
+            <input type="hidden" id="firewall-rule-index" name="rule-index">
+            <div class="form-row">
+                <label for="fw-rule-priority">Priority</label>
+                <input type="number" id="fw-rule-priority" name="priority" value="100" required>
+            </div>
+            <div class="form-row">
+                <label for="fw-rule-action">Action</label>
+                <select id="fw-rule-action" name="action" required>
+                    <option value="allow">Allow</option>
+                    <option value="deny">Deny</option>
+                </select>
+            </div>
+            <div class="form-row">
+                <label for="fw-rule-protocol">Protocol</label>
+                <select id="fw-rule-protocol" name="protocol">
+                    <option value="">Any</option>
+                    <option value="tcp">TCP</option>
+                    <option value="udp">UDP</option>
+                </select>
+            </div>
+            <div class="form-row">
+                <label for="fw-rule-source-cidr">Source CIDR(s)</label>
+                <textarea id="fw-rule-source-cidr" name="source_cidr" rows="3" placeholder="e.g., 192.168.1.10/32&#10;10.0.0.0/8"></textarea>
+            </div>
+            <div class="form-row">
+                <label for="fw-rule-dest-cidr">Destination CIDR(s)</label>
+                <textarea id="fw-rule-dest-cidr" name="dest_cidr" rows="3" placeholder="e.g., 8.8.8.8/32"></textarea>
+            </div>
+            <div class="form-row">
+                <label for="fw-rule-dest-port">Destination Port(s)</label>
+                <input type="text" id="fw-rule-dest-port" name="dest_port" placeholder="e.g., 80,443,1000-2000">
+            </div>
+            <div class="form-row">
+                <label></label>
+                <div class="dialog-actions">
+                    <button type="button" id="cancel-firewall-rule-btn">Cancel</button>
+                    <button type="submit">Save Rule</button>
+                </div>
+            </div>
+        </form>
+    </dialog>
+
+    <script src="/static/state.js" type="module"></script>
+    <script src="/static/ui.js" type="module"></script>
+    <script src="/static/api.js" type="module"></script>
+    <script src="/static/settings.js" type="module"></script>
+    <script src="/static/monitor.js" type="module"></script>
+    <script src="/static/dashboard.js" type="module"></script>
+    <script src="/static/app.js" type="module"></script>
+</body>
+</html>

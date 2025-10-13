@@ -1,0 +1,65 @@
+{
+  "gateway": {
+    "sticky_session_mode": "disabled",
+    "sticky_session_ttl": 300,
+    "sticky_rules": [
+      "*.google.com",
+      "baidu.com"
+    ],
+    "load_balancer_strategy": "round_robin"
+  },
+  "routing": {
+    "rules": [
+      {
+        "priority": 34,
+        "type": "domain",
+        "value": [
+          "baidu.com",
+          "pss.bdstatic.com",
+          "himg.bdimg.com"
+        ],
+        "target": "DIRECT"
+      },
+      {
+        "priority": 1,
+        "type": "source_ip",
+        "value": [
+          "192.148.3.3"
+        ],
+        "target": "cloudflare"
+      },
+      {
+        "priority": 65,
+        "type": "source_ip",
+        "value": [
+          "127.0.0.1"
+        ],
+        "target": "5108"
+      }
+    ]
+  },
+  "logging": {},
+  "firewall": {
+    "enabled": true,
+    "rules": [
+      {
+        "priority": 89,
+        "source_cidr": [
+          "183.89.2.3"
+        ],
+        "action": "deny"
+      },
+      {
+        "priority": 100,
+        "source_cidr": [
+          "127.0.1.28"
+        ],
+        "action": "allow"
+      },
+      {
+        "priority": 9999,
+        "action": "allow"
+      }
+    ]
+  }
+}

@@ -1,0 +1,19 @@
+{
+    "id": "bae43a71-a0fe-4c1e-9685-eec9b76199c1",
+    "remarks": "Vless_172.67.183.27",
+    "type": "vless",
+    "localPort": 1080,
+    "active": false,
+    "address": "172.67.183.27",
+    "port": 2083,
+    "network": "ws",
+    "scheme": "ws",
+    "path": "/?ed=2560",
+    "host": "pages.lekliu.dpdns.org",
+    "grpcServiceName": "",
+    "grpcAuthority": "",
+    "uuid": "f59eb2b7-b51b-4953-a19f-3cabb0f7c618",
+    "security": "tls",
+    "sni": "pages.lekliu.dpdns.org",
+    "fingerprint": "chrome"
+  }

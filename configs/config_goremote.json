@@ -1,0 +1,11 @@
+{
+  "remarks": "Test GoRemote Server",
+  "type": "goremote",
+  "localPort": 1080,
+  "address": "127.0.0.1",
+  "port": 10089,
+  "scheme": "ws",
+  "path": "/tunnel",
+  "host": "",
+  "multiplex": true
+}

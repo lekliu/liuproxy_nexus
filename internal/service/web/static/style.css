@@ -1,0 +1,520 @@
+:root {
+    --primary-color: #007bff;
+    --secondary-color: #6c757d;
+    --background-color: #f8f9fa;
+    --surface-color: #ffffff;
+    --text-color: #212529;
+    --border-color: #dee2e6;
+    --active-color: #28a745;
+    --active-bg-color: #e9f5ec;
+    --label-width: 200px;
+    --status-up-color: #28a745;
+    --status-down-color: #dc3545;
+    --status-unknown-color: #ffc107;
+    --log-bg-color: #ffffff;
+    --log-text-color: #212529;
+    --uplink-color: #3498db;   /* Uplink blue */
+    --downlink-color: #2ecc71; /* Downlink green */
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    margin: 0;
+    padding: 20px;
+    background-color: var(--background-color);
+    color: var(--text-color);
+    font-size: 15px;
+}
+
+.container {
+    max-width: 1200px; /* Widened for better layout */
+    margin: 0 auto;
+    background: var(--surface-color);
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 15px;
+    margin-bottom: 20px;
+}
+
+/* --- 导航样式 --- */
+nav {
+    display: flex;
+    gap: 15px;
+}
+.nav-link {
+    text-decoration: none;
+    color: var(--secondary-color);
+    font-weight: 500;
+    padding: 8px 12px;
+    border-radius: 5px;
+    transition: background-color 0.2s, color 0.2s;
+}
+.nav-link:hover {
+    background-color: #e9ecef;
+}
+.nav-link.active {
+    color: var(--primary-color);
+    background-color: #e7f1ff;
+}
+
+/* --- 应用变更横幅样式 --- */
+.apply-banner {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 20px;
+    background-color: #fff3cd; /* A soft yellow */
+    border: 1px solid #ffeeba;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    color: #856404;
+    font-weight: 500;
+}
+
+.apply-banner .save-btn {
+    padding: 8px 15px;
+    font-size: 0.9em;
+}
+
+/* --- 主区域头部样式 --- */
+.main-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+.main-header h2, .main-header h4 {
+    margin: 0;
+    font-size: 1.3em;
+}
+
+/* --- 设置页面卡片样式 --- */
+#gateway-settings-form, #routing-settings-form, #firewall-settings-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+.settings-card {
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 20px;
+}
+.settings-card h3 {
+    margin-top: 0;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+}
+.radio-group {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+.radio-group input[type="radio"] {
+    width: auto;
+}
+.radio-group label {
+    font-weight: normal;
+    text-align: left;
+}
+textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 5px;
+    font-family: "SF Mono", "Consolas", "Menlo", monospace;
+    font-size: 0.9em;
+    box-sizing: border-box;
+}
+.save-btn {
+    background-color: var(--primary-color);
+    color: white;
+}
+.save-btn:hover {
+    background-color: #0056b3;
+}
+.save-btn:disabled {
+    background-color: var(--secondary-color);
+    cursor: not-allowed;
+}
+.filter-controls {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+.filter-controls input, .filter-controls select {
+    padding: 8px;
+    border: 1px solid var(--border-color);
+    border-radius: 5px;
+    font-size: 0.9em;
+}
+
+th[data-sortable="true"] {
+    cursor: pointer;
+    user-select: none;
+}
+th[data-sortable="true"]:hover {
+    background-color: var(--background-color);
+}
+.sort-indicator {
+    display: inline-block;
+    margin-left: 5px;
+    color: var(--secondary-color);
+    opacity: 0.5;
+}
+.sort-indicator.active {
+    opacity: 1;
+}
+
+#rules-table {
+    margin-top: 10px;
+}
+#rules-table td .actions {
+    min-width: auto;
+}
+.form-hint {
+    font-size: 0.8em;
+    color: var(--secondary-color);
+    margin-top: 5px;
+}
+.form-hint ul {
+    margin: 5px 0 0 15px;
+    padding-left: 10px;
+}
+
+h1 { margin: 0; font-size: 1.5em; }
+
+button {
+    padding: 10px 15px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 0.9em;
+    font-weight: 500;
+    transition: background-color 0.2s ease;
+}
+
+#add-server-btn { background-color: var(--primary-color); color: white; }
+#add-server-btn:hover { background-color: #0056b3; }
+
+#add-rule-btn, #add-firewall-rule-btn {
+    background-color: var(--primary-color);
+    color: white;
+    padding: 8px 15px; /* Adjust padding to match filter controls height */
+}
+
+#add-rule-btn:hover, #add-firewall-rule-btn:hover {
+    background-color: #0056b3;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed; /* For better column control */
+}
+
+th, td {
+    padding: 12px 10px; /* Adjusted padding */
+    text-align: left;
+    border-bottom: 1px solid var(--border-color);
+    white-space: nowrap; /* Prevent wrapping */
+    overflow: hidden;
+    text-overflow: ellipsis; /* Truncate long text */
+}
+
+/* --- NEW Column Widths --- */
+th:first-child, td:first-child { width: 60px; text-align: center; } /* Status */
+th:nth-child(2), td:nth-child(2) { flex-grow: 1; min-width: 150px; } /* Remarks */
+th:nth-child(3), td:nth-child(3) { flex-grow: 1; min-width: 180px; } /* Address */
+th:nth-child(4), td:nth-child(4) { width: 100px; } /* Latency */
+th:nth-child(5), td:nth-child(5) { width: 60px; text-align: center; } /* Activity */
+th:nth-child(6), td:nth-child(6) { width: 140px; } /* Exit IP */
+th:last-child, td:last-child { width: 280px; text-align: center;} /* Actions - INCREASED WIDTH */
+
+tbody tr.active-row { background-color: var(--active-bg-color); }
+tbody tr.inactive-row { background-color: var(--surface-color); }
+tbody tr.down-row { background-color: #f8d7da; color: #721c24; }
+
+.status-indicator {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    display: inline-block;
+    vertical-align: middle;
+}
+.status-indicator.status-up { background-color: var(--status-up-color); }
+.status-indicator.status-down { background-color: var(--status-down-color); }
+.status-indicator.status-unknown { background-color: var(--status-unknown-color); }
+
+.type-icon {
+    display: inline-block;
+    margin-left: 8px;
+    font-size: 1.1em;
+    vertical-align: middle;
+}
+
+.latency-fail {
+    color: var(--status-down-color);
+    font-weight: bold;
+}
+
+.actions {
+    white-space: nowrap;
+}
+
+.actions .action-btn-group {
+    display: flex;
+    justify-content: center;
+    gap: 8px; /* Increased gap for better spacing */
+}
+
+/* --- NEW Button Styles --- */
+.actions button {
+    background: none; /* Make background transparent */
+    border: 1px solid var(--border-color);
+    color: var(--secondary-color);
+    padding: 6px 12px; /* Adjusted padding */
+    border-radius: 5px; /* Add border radius */
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s, color 0.2s;
+}
+.actions button:hover {
+    background-color: #f1f1f1;
+}
+
+.actions .primary-action { /* Activate button */
+    color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+.actions .primary-action:hover {
+    background-color: #e7f1ff;
+}
+
+.actions .deactivate-btn { /* Deactivate button */
+    color: #dc3545;
+    border-color: #dc3545;
+}
+.actions .deactivate-btn:hover {
+    background-color: #f8d7da;
+}
+
+/* --- More Actions Menu --- */
+.more-actions {
+    position: relative;
+    display: inline-block;
+}
+.more-actions-btn {
+    font-size: 1.2em;
+    padding: 6px;
+}
+.more-actions-menu {
+    display: none;
+    position: absolute;
+    right: 0;
+    top: 100%;
+    background-color: var(--surface-color);
+    border: 1px solid var(--border-color);
+    border-radius: 5px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    z-index: 10;
+    min-width: 100px;
+}
+.more-actions-menu a {
+    display: block;
+    padding: 8px 12px;
+    text-decoration: none;
+    color: var(--text-color);
+    font-size: 0.9em;
+}
+.more-actions-menu a:hover {
+    background-color: var(--background-color);
+}
+.more-actions.active .more-actions-menu {
+    display: block;
+}
+
+/* --- Activity Indicator Styles --- */
+.activity-container {
+    display: flex;
+    justify-content: center;
+    align-items: flex-end; /* Bars grow from bottom */
+    gap: 2px;
+    height: 20px;
+    width: 12px;
+    margin: 0 auto; /* Center in the cell */
+}
+.activity-bar {
+    width: 5px;
+    height: 0; /* Initial height */
+    background-color: #e9ecef; /* Inactive color */
+    transition: height 0.3s ease-out;
+}
+.activity-bar.uplink {
+    background-color: var(--uplink-color);
+}
+.activity-bar.downlink {
+    background-color: var(--downlink-color);
+}
+
+
+dialog {
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    padding: 25px;
+    width: 90%;
+    max-width: 850px;
+}
+
+dialog::backdrop { background: rgba(0, 0, 0, 0.4); }
+
+form { display: flex; flex-direction: column; gap: 12px; }
+
+.form-row {
+    display: grid;
+    grid-template-columns: var(--label-width) 1fr;
+    gap: 15px;
+    align-items: center;
+}
+
+form label {
+    font-weight: 500;
+    text-align: right;
+    padding-right: 10px;
+}
+
+form input, form select {
+    padding: 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 5px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.form-section hr { grid-column: 1 / -1; border: none; border-top: 1px solid var(--border-color); margin: 10px 0; }
+.form-section .fields-title { grid-column: 1 / -1; font-weight: bold; margin: 0; padding: 0; text-align: left; }
+
+.dialog-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; grid-column: 2;  }
+.dialog-actions button[type="submit"] { background-color: var(--primary-color); color: white; }
+.dialog-actions button[type="submit"]:hover { background-color: #0056b3; }
+
+.value-input-group {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+}
+.value-input-group textarea {
+    flex-grow: 1;
+}
+.small-btn {
+    padding: 8px 12px;
+    font-size: 0.85em;
+    background-color: var(--background-color);
+    border: 1px solid var(--border-color);
+    color: var(--secondary-color);
+    flex-shrink: 0; /* Prevent the button from shrinking */
+}
+.small-btn:hover {
+    background-color: #e9ecef;
+}
+
+.log-panel {
+    margin-top: 20px;
+    border-top: 1px solid var(--border-color);
+    padding-top: 15px;
+}
+
+.log-panel h2 {
+    margin-top: 0;
+    margin-bottom: 10px;
+    font-size: 1.2em;
+}
+
+.log-panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.log-panel-header h2 {
+    margin: 0;
+    font-size: 1.2em;
+}
+
+#clear-log-btn {
+    padding: 5px 10px;
+    font-size: 0.8em;
+    background-color: var(--background-color);
+    border: 1px solid var(--border-color);
+}
+
+#log-content {
+    background-color: var(--log-bg-color);
+    color: var(--log-text-color);
+    font-family: "SF Mono", "Consolas", "Menlo", monospace;
+    font-size: 0.85em;
+    padding: 15px;
+    border-radius: 5px;
+    border: 1px solid var(--border-color);
+    height: 200px;
+    overflow-y: scroll;
+    white-space: pre-wrap;
+    word-break: break-all;
+    margin: 0;
+}
+
+/* --- Dashboard Specific Styles --- */
+.dashboard-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.stat-card {
+    background-color: var(--background-color);
+    padding: 20px;
+    border-radius: 8px;
+    text-align: center;
+    border: 1px solid var(--border-color);
+}
+
+.stat-card h3 {
+    margin-top: 0;
+    margin-bottom: 10px;
+    font-size: 1em;
+    font-weight: 500;
+    color: var(--secondary-color);
+}
+
+.stat-card p {
+    margin: 0;
+    font-size: 1.8em;
+    font-weight: 600;
+    color: var(--primary-color);
+}
+
+.chart-container {
+    position: relative;
+    height: 350px;
+    width: 100%;
+}
+
+.action-deny {
+    color: var(--status-down-color);
+    font-weight: bold;
+}
+
+.action-allow {
+    color: var(--status-up-color);
+}

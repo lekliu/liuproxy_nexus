@@ -1,0 +1,59 @@
+# --------------------------------------------------------------------
+# --               LiuProxy Gateway (macvlan mode)                  --
+# --------------------------------------------------------------------
+#
+# 使用说明:
+# 1. 在 Docker 主机上创建一个 macvlan 网络，例如:
+#    docker network create -d macvlan \
+#      --subnet=192.168.0.0/24 \
+#      --gateway=192.168.0.1 \
+#      -o parent=eno1 \
+#      maclan_net
+#    (请将 subnet, gateway, parent 替换为你的网络信息, maclan_net 是你给网络起的名字)
+#
+# 2. 修改下面的 ipv4_address 为你为容器规划的、唯一的局域网IP。
+# 3. 修改下面 networks.app_net.name 为你第1步中创建的网络名称。
+#
+# --------------------------------------------------------------------
+
+services:
+  gateway:
+    platform: linux/amd64
+    image: liuproxy-gateway:latest
+    container_name: liuproxy_gateway_service
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ./configs:/app/configs
+    cap_add:
+      - NET_ADMIN
+    restart: unless-stopped
+    privileged: true
+    networks:
+      app_net:
+        ipv4_address: 192.168.0.5
+    environment:
+      # --- 在这里配置你的网络环境 ---
+
+      # [可选] 是否启用 TCP 透明代理 (默认: "true")
+      - TRANSPARENT_PROXY_TCP_ENABLED=true
+
+      # [可选] 是否启用 UDP 透明代理 (默认: "true")
+      # 如果你只想代理DNS，可以只开启这个
+      - TRANSPARENT_PROXY_UDP_ENABLED=false
+
+      # [可选] 透明代理监听的端口 (默认: 12345)
+      - TPROXY_PORT=12345
+
+      # [可选] 是否启用 MSS Clamping (默认: "true")
+      - MSS_CLAMPING_ENABLED=true
+
+      # [推荐修改] 配置需要直连（不走代理）的IP段，根据你的局域网进行调整。
+      # 下面是一个例子，只排除了 192.168.0.0/16 网段和回环地址。
+      - EXCLUDED_IPS=192.168.0.0/16,127.0.0.0/8
+
+networks:
+  app_net:
+    external: true
+    name: maclan

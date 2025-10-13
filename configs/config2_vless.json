@@ -1,0 +1,17 @@
+{
+    "id": "c0ad40dc-dac7-42c5-972e-2b3693b6a242",
+    "remarks": "Vless_2",
+    "type": "vless",
+    "active": false,
+    "localPort": 1080,
+    "address": "156.238.19.95",
+    "port": 443,
+    "network": "grpc",
+    "grpcServiceName": "",
+    "grpcMode": "gun",
+    "grpcAuthority": "",
+    "uuid": "401374e6-df77-41fb-f638-dad8184f175b",
+    "security": "tls",
+    "sni": "pqh24v3.hiddendom.shop",
+    "fingerprint": "safari"
+  }
