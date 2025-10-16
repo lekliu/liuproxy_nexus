@@ -2,13 +2,13 @@ package reality
 
 import (
 	"io"
-	"liuproxy_gateway/internal/shared/logger"
+	"liuproxy_nexus/internal/shared/logger"
 	"net"
 	"os"
 	"time"
 
 	"github.com/xtls/reality"
-	"liuproxy_gateway/internal/xray_core/transport/internet"
+	"liuproxy_nexus/internal/xray_core/transport/internet"
 )
 
 func (c *Config) GetREALITYConfig() *reality.Config {

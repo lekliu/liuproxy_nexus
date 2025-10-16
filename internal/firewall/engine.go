@@ -3,8 +3,8 @@ package firewall
 
 import (
 	"fmt"
-	"liuproxy_gateway/internal/shared/logger"
-	"liuproxy_gateway/internal/shared/settings"
+	"liuproxy_nexus/internal/shared/logger"
+	"liuproxy_nexus/internal/shared/settings"
 	"net"
 	"sort"
 	"strconv"

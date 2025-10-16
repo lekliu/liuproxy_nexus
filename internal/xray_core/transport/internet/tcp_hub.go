@@ -3,7 +3,7 @@ package internet
 import (
 	"context"
 
-	"liuproxy_gateway/internal/xray_core/common/net"
+	"liuproxy_nexus/internal/xray_core/common/net"
 )
 
 type ConnHandler func(net.Conn)

@@ -14,7 +14,7 @@ RUN export GOPROXY=https://goproxy.cn,direct && go mod download
 COPY . .
 
 # 只编译 local 可执行文件
-RUN CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags="-s -w" -o /app/bin/liuproxy-gateway ./cmd/local
+RUN CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags="-s -w" -o /app/bin/liuproxy-nexus ./cmd/local
 
 
 # --- STAGE 2: Final Image ---
@@ -26,7 +26,7 @@ WORKDIR /app
 RUN apk update && apk add --no-cache curl iptables
 
 # 复制编译好的二进制文件和入口脚本
-COPY --from=builder /app/bin/liuproxy-gateway .
+COPY --from=builder /app/bin/liuproxy-nexus .
 COPY scripts/entrypoint.sh .
 RUN chmod +x ./entrypoint.sh
 
@@ -41,4 +41,4 @@ ENTRYPOINT ["./entrypoint.sh"]
 
 # CMD 现在作为 ENTRYPOINT 的默认参数，如果 ENTRYPOINT 最后没有 exec，它会被执行
 # 但因为我们用了 exec，这里的内容实际上不会被使用，但保留是好的实践
-CMD ["./liuproxy-gateway", "--configdir", "configs"]
+CMD ["./liuproxy-nexus", "--configdir", "configs"]

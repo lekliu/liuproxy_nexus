@@ -2,11 +2,12 @@ package tunnel
 
 import (
 	"fmt"
-	"liuproxy_gateway/internal/shared/types"
-	"liuproxy_gateway/internal/tunnel/goremote"
-	"liuproxy_gateway/internal/tunnel/httpproxy"
-	"liuproxy_gateway/internal/tunnel/vless"
-	"liuproxy_gateway/internal/tunnel/worker"
+	"liuproxy_nexus/internal/shared/types"
+	"liuproxy_nexus/internal/tunnel/goremote"
+	"liuproxy_nexus/internal/tunnel/httpproxy"
+	"liuproxy_nexus/internal/tunnel/socks5proxy"
+	"liuproxy_nexus/internal/tunnel/vless"
+	"liuproxy_nexus/internal/tunnel/worker"
 )
 
 // NewStrategy is the factory function to create a new strategy based on the active profile.
@@ -32,7 +33,15 @@ func NewStrategy(cfg *types.Config, profiles []*types.ServerProfile, stateManage
 	case "goremote", "remote", "":
 		return goremote.NewGoRemoteStrategy(cfg, activeProfile, stateManager)
 	case "http":
-		return httpproxy.NewHTTPStrategy(cfg, activeProfile, stateManager)
+		// Check the specific protocol for the "http" type server profile.
+		switch activeProfile.ProxyProtocol {
+		case "socks5":
+			return socks5proxy.NewSOCKS5Strategy(cfg, activeProfile, stateManager)
+		case "http", "": // Default to HTTP/HTTPS proxy
+			return httpproxy.NewHTTPStrategy(cfg, activeProfile, stateManager)
+		default:
+			return nil, fmt.Errorf("unknown proxy_protocol for http type: '%s'", activeProfile.ProxyProtocol)
+		}
 	default:
 		return nil, fmt.Errorf("unknown or unsupported strategy type: '%s'", activeProfile.Type)
 	}

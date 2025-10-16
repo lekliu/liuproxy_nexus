@@ -5,9 +5,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"liuproxy_gateway/internal/shared/config"
-	"liuproxy_gateway/internal/shared/logger"
-	"liuproxy_gateway/internal/tunnel"
+	"liuproxy_nexus/internal/shared/config"
+	"liuproxy_nexus/internal/shared/logger"
+	"liuproxy_nexus/internal/tunnel"
 	"log"
 	"net"
 	"os"
@@ -15,7 +15,7 @@ import (
 	"path/filepath"
 	"syscall"
 
-	"liuproxy_gateway/internal/shared/types"
+	"liuproxy_nexus/internal/shared/types"
 )
 
 const (

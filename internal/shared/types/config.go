@@ -12,8 +12,11 @@ type ServerProfile struct {
 	LocalPort int `json:"localPort,omitempty"`
 
 	// --- HTTP 代理专属参数 ---
-	Username string `json:"username,omitempty"`
-	Password string `json:"password,omitempty"`
+	// ProxyProtocol specifies the protocol to use when connecting to the upstream proxy.
+	// For "http" type servers. Can be "http" (default) or "socks5".
+	ProxyProtocol string `json:"proxy_protocol,omitempty"`
+	Username      string `json:"username,omitempty"`
+	Password      string `json:"password,omitempty"`
 
 	// --- 连接参数 ---
 	Address string `json:"address"` // 服务器地址 (域名或IP)
@@ -71,16 +74,18 @@ type LogConf struct {
 	Level string `ini:"level"`
 }
 
-// GatewayConf 包含网关特有的配置
-type GatewayConf struct {
-	StickySessionMode string `ini:"sticky_session_mode"` // 粘性会话模式: disabled, global, conditional
-	StickySessionTTL  int    `ini:"sticky_session_ttl"`  // 粘性会话的TTL (秒)
+// ProxyPoolConf 包含代理池模块的特定配置
+type ProxyPoolConf struct {
+	ZdayeProxyURL              string `ini:"zdaye_proxy_url"`
+	ScrapeIntervalHours        int    `ini:"scrape_interval_hours"`
+	HealthCheckIntervalSeconds int    `ini:"health_check_interval_seconds"`
+	RevalidationBatchSize      int    `ini:"revalidation_batch_size"`
 }
 
 // Config 是local项目的统一配置结构体 (现在只包含行为配置)
 type Config struct {
-	CommonConf  `ini:"common"`
-	LocalConf   `ini:"local"`
-	LogConf     `ini:"log"`
-	GatewayConf `ini:"Gateway"`
+	CommonConf    `ini:"common"`
+	LocalConf     `ini:"local"`
+	LogConf       `ini:"log"`
+	ProxyPoolConf `ini:"proxypool"`
 }

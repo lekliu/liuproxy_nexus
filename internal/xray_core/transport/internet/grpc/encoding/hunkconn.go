@@ -3,15 +3,15 @@ package encoding
 import (
 	"context"
 	"io"
-	"liuproxy_gateway/internal/xray_core/common/errors"
+	"liuproxy_nexus/internal/xray_core/common/errors"
 	"net"
 
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/peer"
-	"liuproxy_gateway/internal/xray_core/common/buf"
-	xnet "liuproxy_gateway/internal/xray_core/common/net"
-	"liuproxy_gateway/internal/xray_core/common/net/cnc"
-	"liuproxy_gateway/internal/xray_core/common/signal/done"
+	"liuproxy_nexus/internal/xray_core/common/buf"
+	xnet "liuproxy_nexus/internal/xray_core/common/net"
+	"liuproxy_nexus/internal/xray_core/common/net/cnc"
+	"liuproxy_nexus/internal/xray_core/common/signal/done"
 )
 
 type HunkConn interface {

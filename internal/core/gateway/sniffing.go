@@ -6,7 +6,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"io"
-	"liuproxy_gateway/internal/shared/types"
+	"liuproxy_nexus/internal/shared/types"
 	"net"
 	"net/http"
 	"strconv"

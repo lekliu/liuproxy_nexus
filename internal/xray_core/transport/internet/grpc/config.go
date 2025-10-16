@@ -4,8 +4,8 @@ import (
 	"net/url"
 	"strings"
 
-	"liuproxy_gateway/internal/xray_core/common"
-	"liuproxy_gateway/internal/xray_core/transport/internet"
+	"liuproxy_nexus/internal/xray_core/common"
+	"liuproxy_nexus/internal/xray_core/transport/internet"
 )
 
 const protocolName = "grpc"

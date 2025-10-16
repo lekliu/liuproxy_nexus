@@ -2,7 +2,7 @@ package internet
 
 import (
 	"golang.org/x/sys/unix"
-	"liuproxy_gateway/internal/xray_core/common/errors"
+	"liuproxy_nexus/internal/xray_core/common/errors"
 	"net"
 	"syscall"
 )

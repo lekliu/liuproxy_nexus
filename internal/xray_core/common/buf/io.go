@@ -2,7 +2,7 @@ package buf
 
 import (
 	"io"
-	"liuproxy_gateway/internal/shared/logger"
+	"liuproxy_nexus/internal/shared/logger"
 	"net"
 	"os"
 	"syscall"

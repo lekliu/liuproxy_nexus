@@ -78,7 +78,7 @@ version: '3.9'
 
 services:
   gateway:
-    image: liuproxy-gateway:latest
+    image: liuproxy-nexus:latest
     # ... (其他部分保持不变) ...
     networks:
       app_net:
@@ -142,8 +142,8 @@ version: '3.9'
 
 services:
   gateway:
-    image: liuproxy-gateway:latest
-    container_name: liuproxy_gateway_service
+    image: liuproxy-nexus:latest
+    container_name: liuproxy_nexus_service
     build: .
     volumes:
       - ./configs:/app/configs
@@ -160,7 +160,7 @@ services:
 
 适用于不使用 Docker 的环境。
 
-1.  **编译**: 在项目根目录下运行 `go build -o liuproxy-gateway ./cmd/local`。
-2.  **运行**: 将编译好的 `liuproxy-gateway` 文件和 `configs` 目录放在一起，然后执行 `./liuproxy-gateway --configdir=configs`。
+1.  **编译**: 在项目根目录下运行 `go build -o liuproxy-nexus ./cmd/local`。
+2.  **运行**: 将编译好的 `liuproxy-nexus` 文件和 `configs` 目录放在一起，然后执行 `./liuproxy-nexus --configdir=configs`。
 ```
 

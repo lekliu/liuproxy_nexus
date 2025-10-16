@@ -3,7 +3,7 @@ package errors
 import (
 	"strings"
 
-	"liuproxy_gateway/internal/xray_core/common/serial"
+	"liuproxy_nexus/internal/xray_core/common/serial"
 )
 
 // Error is an error object with underlying error.

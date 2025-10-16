@@ -2,9 +2,9 @@ package worker
 
 import (
 	"io"
-	"liuproxy_gateway/internal/shared"
-	protocol2 "liuproxy_gateway/internal/shared/protocol"
-	"liuproxy_gateway/internal/shared/types"
+	"liuproxy_nexus/internal/shared"
+	protocol2 "liuproxy_nexus/internal/shared/protocol"
+	"liuproxy_nexus/internal/shared/types"
 	"net"
 	"sync"
 	"time"

@@ -6,7 +6,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"net"
 
-	"liuproxy_gateway/internal/shared/types"
+	"liuproxy_nexus/internal/shared/types"
 )
 
 // HandleConnection 是 VLESS 原生策略的统一连接处理器。

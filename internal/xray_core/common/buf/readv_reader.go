@@ -4,7 +4,7 @@ import (
 	"io"
 	"syscall"
 
-	"liuproxy_gateway/internal/xray_core/common/platform"
+	"liuproxy_nexus/internal/xray_core/common/platform"
 )
 
 type allocStrategy struct {

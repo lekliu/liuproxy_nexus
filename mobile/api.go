@@ -4,12 +4,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"gopkg.in/ini.v1"
-	"liuproxy_gateway/internal/shared/logger"
+	"liuproxy_nexus/internal/shared/logger"
 	"runtime/debug"
 	"sync"
 
-	"liuproxy_gateway/internal/app"
-	"liuproxy_gateway/internal/shared/types"
+	"liuproxy_nexus/internal/app"
+	"liuproxy_nexus/internal/shared/types"
 )
 
 var (

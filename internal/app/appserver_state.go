@@ -1,10 +1,10 @@
 package app
 
 import (
-	"liuproxy_gateway/internal/core/dispatcher"
-	"liuproxy_gateway/internal/shared/logger"
-	"liuproxy_gateway/internal/shared/settings"
-	"liuproxy_gateway/internal/shared/types"
+	"liuproxy_nexus/internal/core/dispatcher"
+	"liuproxy_nexus/internal/shared/logger"
+	"liuproxy_nexus/internal/shared/settings"
+	"liuproxy_nexus/internal/shared/types"
 )
 
 // deepCopyAppState performs a deep copy of the AppState, suitable for creating a read-only snapshot.
@@ -84,10 +84,11 @@ func (s *AppServer) ApplyChanges() error {
 		s.manageInstances()
 		s.configLock.Unlock()
 
-		// manageInstances 执行完毕后，再发布状态
+		// 3. Publish: copy the fully prepared A-Zone to the B-Zone (workState)
 		if err := s.ReloadStrategy(); err != nil {
-			logger.Error().Err(err).Msg("Failed to reload strategy after applying changes.")
+			logger.Error().Err(err).Msg("Failed to reload strategy before updating dispatcher.")
 		}
+
 	}()
 
 	return nil

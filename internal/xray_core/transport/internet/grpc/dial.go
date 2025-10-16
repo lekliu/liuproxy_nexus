@@ -2,8 +2,8 @@ package grpc
 
 import (
 	"context"
-	"liuproxy_gateway/internal/shared/logger"
-	"liuproxy_gateway/internal/xray_core/common/errors"
+	"liuproxy_nexus/internal/shared/logger"
+	"liuproxy_nexus/internal/xray_core/common/errors"
 	gonet "net"
 	"time"
 
@@ -11,13 +11,13 @@ import (
 	"google.golang.org/grpc/backoff"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/keepalive"
-	"liuproxy_gateway/internal/xray_core/common"
-	"liuproxy_gateway/internal/xray_core/common/net"
-	"liuproxy_gateway/internal/xray_core/common/session"
-	"liuproxy_gateway/internal/xray_core/transport/internet"
-	"liuproxy_gateway/internal/xray_core/transport/internet/grpc/encoding"
-	"liuproxy_gateway/internal/xray_core/transport/internet/reality"
-	"liuproxy_gateway/internal/xray_core/transport/internet/tls"
+	"liuproxy_nexus/internal/xray_core/common"
+	"liuproxy_nexus/internal/xray_core/common/net"
+	"liuproxy_nexus/internal/xray_core/common/session"
+	"liuproxy_nexus/internal/xray_core/transport/internet"
+	"liuproxy_nexus/internal/xray_core/transport/internet/grpc/encoding"
+	"liuproxy_nexus/internal/xray_core/transport/internet/reality"
+	"liuproxy_nexus/internal/xray_core/transport/internet/tls"
 )
 
 func Dial(ctx context.Context, dest net.Destination, streamSettings *internet.MemoryStreamConfig) (net.Conn, error) {

@@ -15,6 +15,7 @@
             <nav>
                 <a href="#" id="nav-dashboard" class="nav-link active">Dashboard</a>
                 <a href="#" id="nav-servers" class="nav-link">Serverss</a>
+                <a href="#" id="nav-proxy-pool" class="nav-link">Proxy Pool</a>
                 <a href="#" id="nav-gateway" class="nav-link">Gateway</a>
                 <a href="#" id="nav-routing" class="nav-link">Routing</a>
                 <a href="#" id="nav-firewall" class="nav-link">Firewall</a>
@@ -66,6 +67,44 @@
                 </thead>
                 <tbody id="server-list"></tbody>
             </table>
+        </main>
+
+        <main id="main-proxy-pool" style="display: none;">
+            <div class="main-header">
+                <h2>Proxy Pool Status</h2>
+                <div class="filter-controls">
+                    <input type="text" id="proxy-pool-filter-input" placeholder="Filter by address or country...">
+                    <select id="proxy-pool-status-filter">
+                        <option value="all">All</option>
+                        <option value="healthy">Healthy</option>
+                        <option value="unhealthy">Unhealthy</option>
+                    </select>
+                    <button type="button" id="refresh-pool-btn">Refresh</button>
+                    <button type="button" id="test-selected-btn">Test Selected</button>
+                    <button type="button" id="delete-selected-btn" class="danger-btn">Delete Selected</button>
+                    <button type="button" id="show-import-dialog-btn">Import Proxies</button>
+                </div>
+            </div>
+            <table id="proxy-pool-table">
+                <thead>
+                    <tr>
+                        <th class="checkbox-col"><input type="checkbox" id="select-all-proxies"></th>
+                        <th>Status</th>
+                        <th>Protocol</th>
+                        <th>Address</th>
+                        <th>Latency</th>
+                        <th>Success</th>
+                        <th>Failures</th>
+                        <th>Country/Region</th>
+                        <th>In Use By</th>
+                        <th>Last Checked</th>
+                    </tr>
+                </thead>
+                <tbody id="proxy-pool-list-body"></tbody>
+            </table>
+            <div class="pagination-controls" id="proxy-pool-pagination">
+                <!-- Pagination buttons will be generated here by JavaScript -->
+            </div>
         </main>
 
         <!-- Gateway Settings Page -->
@@ -275,8 +314,25 @@
 
             <div id="http-fields" class="form-section type-specific-fields">
                 <hr><p class="fields-title">HTTP Proxy Settings</p>
-                <div class="form-row"><label for="username">Username (Optional)</label><input type="text" id="username" name="username"></div>
-                <div class="form-row"><label for="password">Password (Optional)</label><input type="password" id="password" name="password"></div>
+                <div class="form-row">
+                    <label for="proxy_protocol">Upstream Protocol</label>
+                    <select id="proxy_protocol" name="proxy_protocol">
+                        <option value="http">HTTP / HTTPS</option>
+                        <option value="socks5">SOCKS5</option>
+                    </select>
+                </div>
+                <div class="form-row">
+                    <label for="username">Username (Optional)</label>
+                    <input type="text" id="username" name="username">
+                </div>
+                <div class="form-row">
+                    <label for="password">Password (Optional)</label>
+                    <input type="password" id="password" name="password">
+                </div>
+                <div class="form-row">
+                    <label></label> <!-- Empty label for alignment -->
+                    <button type="button" id="fetch-from-pool-btn" class="small-btn">Fetch from Proxy Pool</button>
+                </div>
             </div>
 
             <div id="goremote-fields" class="form-section type-specific-fields">
@@ -344,6 +400,30 @@
             </div>
 
             <div class="form-row"><label></label><div class="dialog-actions"><button type="button" id="cancel-btn">Cancel</button><button type="submit">Save</button></div></div>
+        </form>
+    </dialog>
+
+        <dialog id="import-proxy-dialog">
+        <form id="import-proxy-form">
+            <h2>Import Proxies</h2>
+            <div class="form-row">
+                <label for="import-proxy-list">Proxy List (IP:Port)</label>
+                <textarea id="import-proxy-list" name="import-proxy-list" rows="8" placeholder="1.2.3.4:8080&#10;5.6.7.8:1080"></textarea>
+            </div>
+            <div class="form-row">
+                <label for="import-proxy-protocol">Protocol Type</label>
+                <select id="import-proxy-protocol" name="import-proxy-protocol">
+                    <option value="http" selected>HTTP / HTTPS</option>
+                    <option value="socks5">SOCKS5</option>
+                </select>
+            </div>
+            <div class="form-row">
+                <label></label>
+                <div class="dialog-actions">
+                    <button type="button" id="cancel-import-btn">Cancel</button>
+                    <button type="submit" class="save-btn">Import and Validate</button>
+                </div>
+            </div>
         </form>
     </dialog>
 
@@ -445,6 +525,7 @@
     <script src="/static/settings.js" type="module"></script>
     <script src="/static/monitor.js" type="module"></script>
     <script src="/static/dashboard.js" type="module"></script>
+    <script src="/static/proxy-pool.js" type="module"></script>
     <script src="/static/app.js" type="module"></script>
 </body>
 </html>

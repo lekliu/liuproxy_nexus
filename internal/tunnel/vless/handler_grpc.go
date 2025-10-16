@@ -11,12 +11,12 @@ import (
 	"strconv"
 	"sync"
 
-	"liuproxy_gateway/internal/shared/types"
-	xraynet "liuproxy_gateway/internal/xray_core/common/net"
-	"liuproxy_gateway/internal/xray_core/common/serial"
-	"liuproxy_gateway/internal/xray_core/transport/internet"
-	"liuproxy_gateway/internal/xray_core/transport/internet/grpc"
-	"liuproxy_gateway/internal/xray_core/transport/internet/tls"
+	"liuproxy_nexus/internal/shared/types"
+	xraynet "liuproxy_nexus/internal/xray_core/common/net"
+	"liuproxy_nexus/internal/xray_core/common/serial"
+	"liuproxy_nexus/internal/xray_core/transport/internet"
+	"liuproxy_nexus/internal/xray_core/transport/internet/grpc"
+	"liuproxy_nexus/internal/xray_core/transport/internet/tls"
 )
 
 // HandleGRPCConnection encapsulates all logic for handling a VLESS+gRPC connection.

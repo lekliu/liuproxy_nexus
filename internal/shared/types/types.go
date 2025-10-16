@@ -2,6 +2,7 @@ package types
 
 import (
 	"context"
+	"liuproxy_nexus/proxypool/model"
 	"net"
 )
 
@@ -88,6 +89,13 @@ type StateProvider interface {
 // Dispatcher 接口的 Dispatch 方法现在返回一个完整的 TunnelStrategy 实例
 type Dispatcher interface {
 	Dispatch(ctx context.Context, source net.Addr, target string) (TunnelStrategy, string, error)
+}
+
+// ProxyPoolStatusItem extends ProxyInfo with its current usage status within the application.
+type ProxyPoolStatusItem struct {
+	model.ProxyInfo
+	Status  string `json:"status"`    // "Idle" or "In Use"
+	InUseBy string `json:"in_use_by"` // Remarks of the server profile using this proxy, if any.
 }
 
 type HealthStatus int

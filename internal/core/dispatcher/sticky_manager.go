@@ -2,8 +2,8 @@ package dispatcher
 
 import (
 	"github.com/rs/zerolog/log"
-	"liuproxy_gateway/internal/shared/settings"
-	"liuproxy_gateway/internal/shared/types"
+	"liuproxy_nexus/internal/shared/settings"
+	"liuproxy_nexus/internal/shared/types"
 	"regexp"
 	"strings"
 	"sync"

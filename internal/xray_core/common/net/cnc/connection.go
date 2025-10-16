@@ -4,10 +4,10 @@ import (
 	"io"
 	"time"
 
-	"liuproxy_gateway/internal/xray_core/common"
-	"liuproxy_gateway/internal/xray_core/common/buf"
-	"liuproxy_gateway/internal/xray_core/common/net"
-	"liuproxy_gateway/internal/xray_core/common/signal/done"
+	"liuproxy_nexus/internal/xray_core/common"
+	"liuproxy_nexus/internal/xray_core/common/buf"
+	"liuproxy_nexus/internal/xray_core/common/net"
+	"liuproxy_nexus/internal/xray_core/common/signal/done"
 )
 
 type ConnectionOption func(*connection)

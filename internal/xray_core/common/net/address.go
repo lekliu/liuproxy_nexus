@@ -2,8 +2,8 @@ package net
 
 import (
 	"bytes"
-	"liuproxy_gateway/internal/shared/logger"
-	"liuproxy_gateway/internal/xray_core/common/errors"
+	"liuproxy_nexus/internal/shared/logger"
+	"liuproxy_nexus/internal/xray_core/common/errors"
 	"net"
 	"strings"
 )

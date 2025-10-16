@@ -4,13 +4,13 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"liuproxy_gateway/internal/tunnel"
+	"liuproxy_nexus/internal/tunnel"
 	"log"
 	"os"
 	"os/signal"
 	"syscall"
 
-	"liuproxy_gateway/internal/shared/types"
+	"liuproxy_nexus/internal/shared/types"
 )
 
 const defaultConfigPath = "configs/config_vless.json"

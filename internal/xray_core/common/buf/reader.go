@@ -3,7 +3,7 @@ package buf
 import (
 	"io"
 
-	"liuproxy_gateway/internal/xray_core/common"
+	"liuproxy_nexus/internal/xray_core/common"
 )
 
 // ReadBuffer reads a Buffer from the given reader.

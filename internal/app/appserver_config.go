@@ -3,9 +3,9 @@ package app
 import (
 	"fmt"
 	"github.com/google/uuid"
-	"liuproxy_gateway/internal/shared/config"
-	"liuproxy_gateway/internal/shared/logger"
-	"liuproxy_gateway/internal/shared/types"
+	"liuproxy_nexus/internal/shared/config"
+	"liuproxy_nexus/internal/shared/logger"
+	"liuproxy_nexus/internal/shared/types"
 	"sort"
 )
 

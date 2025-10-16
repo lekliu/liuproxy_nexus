@@ -4,8 +4,8 @@ import (
 	"bufio"
 	"context"
 	"fmt"
-	"liuproxy_gateway/internal/shared"
-	"liuproxy_gateway/internal/shared/types"
+	"liuproxy_nexus/internal/shared"
+	"liuproxy_nexus/internal/shared/types"
 	"net"
 	"strconv"
 )

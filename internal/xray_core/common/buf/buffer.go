@@ -2,8 +2,8 @@ package buf
 
 import (
 	"io"
-	"liuproxy_gateway/internal/xray_core/common/bytespool"
-	"liuproxy_gateway/internal/xray_core/common/errors"
+	"liuproxy_nexus/internal/xray_core/common/bytespool"
+	"liuproxy_nexus/internal/xray_core/common/errors"
 )
 
 const (

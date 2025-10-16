@@ -8,7 +8,7 @@ import (
 	"time"
 
 	utls "github.com/refraction-networking/utls"
-	"liuproxy_gateway/internal/xray_core/common/net"
+	"liuproxy_nexus/internal/xray_core/common/net"
 )
 
 //go:generate go run porting_vless/common/errors/errorgen

@@ -7,7 +7,7 @@ import (
 	"strconv"
 
 	"gopkg.in/ini.v1"
-	"liuproxy_gateway/internal/shared/types"
+	"liuproxy_nexus/internal/shared/types"
 )
 
 // LoadIni 只加载 vless.ini 行为配置文件。

@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
-	"liuproxy_gateway/internal/shared"
+	"liuproxy_nexus/internal/shared"
 )
 
 // DialWS 负责为 GoRemote 策略建立一个 WebSocket 连接

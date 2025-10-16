@@ -2,12 +2,12 @@ package internet
 
 import (
 	"context"
-	"liuproxy_gateway/internal/shared/logger"
+	"liuproxy_nexus/internal/shared/logger"
 	"syscall"
 	"time"
 
 	"github.com/sagernet/sing/common/control"
-	"liuproxy_gateway/internal/xray_core/common/net"
+	"liuproxy_nexus/internal/xray_core/common/net"
 )
 
 var effectiveSystemDialer SystemDialer = &DefaultSystemDialer{}

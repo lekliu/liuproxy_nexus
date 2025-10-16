@@ -10,8 +10,8 @@ import (
 	"github.com/rs/zerolog/log"
 	"golang.org/x/net/proxy"
 	"io"
-	protocol2 "liuproxy_gateway/internal/shared/protocol"
-	"liuproxy_gateway/internal/shared/securecrypt"
+	protocol2 "liuproxy_nexus/internal/shared/protocol"
+	"liuproxy_nexus/internal/shared/securecrypt"
 	"net"
 	"net/http"
 	"net/url"
@@ -21,7 +21,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"liuproxy_gateway/internal/shared/types"
+	"liuproxy_nexus/internal/shared/types"
 )
 
 type WorkerStrategy struct {

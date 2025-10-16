@@ -2,9 +2,9 @@ package internet
 
 import (
 	"context"
-	"liuproxy_gateway/internal/xray_core/common/errors"
-	"liuproxy_gateway/internal/xray_core/common/net"
-	"liuproxy_gateway/internal/xray_core/common/session"
+	"liuproxy_nexus/internal/xray_core/common/errors"
+	"liuproxy_nexus/internal/xray_core/common/net"
+	"liuproxy_nexus/internal/xray_core/common/session"
 )
 
 // dialFunc is an interface to dial network connection to a specific destination.

@@ -3,10 +3,10 @@ package main
 import (
 	"flag"
 	"fmt"
-	"liuproxy_gateway/internal/app"
-	"liuproxy_gateway/internal/shared/config"
-	"liuproxy_gateway/internal/shared/logger"
-	"liuproxy_gateway/internal/shared/types"
+	"liuproxy_nexus/internal/app"
+	"liuproxy_nexus/internal/shared/config"
+	"liuproxy_nexus/internal/shared/logger"
+	"liuproxy_nexus/internal/shared/types"
 	"os"
 	"path/filepath"
 )

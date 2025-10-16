@@ -15,7 +15,7 @@ type SettingsManager struct {
 	filePath    string
 	settings    atomic.Value // 存储一个 *RuntimeSettings 指针，用于无锁读取
 	subscribers map[string][]ConfigurableModule
-	mu          sync.RWMutex // 用于保护 subscribers map 和文件写入操作
+	mu          sync.RWMutex // Protects subscribers map and file write operations
 }
 
 // NewSettingsManager 创建并初始化一个新的配置管理器。

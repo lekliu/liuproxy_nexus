@@ -4,12 +4,12 @@
 gomobile bind -x -target=android/arm64 -androidapi 21 -o D:\code\github\liuproxy\liuproxy_app\app\libs\liuproxy.aar ./mobile
 
 //2、本地部署到ubuntu服务器
-// 一、编译 liuproxy-gateway.tar
-docker build -t liuproxy-gateway:latest .
-docker save -o liuproxy-gateway.tar liuproxy-gateway:latest
+// 一、编译 liuproxy-nexus.tar
+docker build -t liuproxy-nexus:latest .
+docker save -o liuproxy-nexus.tar liuproxy-nexus:latest
 
 // 二、拷贝到ubuntu系统
-root@liuserver:/opt/liuproxy# docker load < liuproxy-gateway.tar
+root@liuserver:/opt/liuproxy# docker load < liuproxy-nexus.tar
 root@liuserver:/opt/liuproxy# docker compose up -d --pull never
 
 //3、验证udp功能
@@ -20,6 +20,16 @@ nslookup www.google.com 8.8.8.8
 第一步：登录 Docker Hub (必须)
 docker login
 第二步：构建镜像
-docker build -t lekliu/liuproxy-gateway:3.0 .
+docker build -t lekliu/liuproxy-nexus:4.0 .
 第三步：推送镜像
-docker push lekliu/liuproxy-gateway:3.0
+docker push lekliu/liuproxy-nexus:4.0
+
+
+//backup
+    "id": "115.231.181.40:8128",
+    "id": "175.178.136.39:8080",
+    "id": "222.59.173.105:45189",
+    "id": "36.136.27.2:4999",
+    "id": "49.233.156.20:80",
+
+

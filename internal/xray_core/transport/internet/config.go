@@ -1,8 +1,8 @@
 package internet
 
 import (
-	"liuproxy_gateway/internal/xray_core/common/errors"
-	"liuproxy_gateway/internal/xray_core/common/serial"
+	"liuproxy_nexus/internal/xray_core/common/errors"
+	"liuproxy_nexus/internal/xray_core/common/serial"
 )
 
 type ConfigCreator func() interface{}

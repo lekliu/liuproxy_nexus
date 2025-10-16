@@ -6,9 +6,9 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
-	"liuproxy_gateway/internal/xray_core/common/buf"
-	"liuproxy_gateway/internal/xray_core/common/errors"
-	"liuproxy_gateway/internal/xray_core/common/serial"
+	"liuproxy_nexus/internal/xray_core/common/buf"
+	"liuproxy_nexus/internal/xray_core/common/errors"
+	"liuproxy_nexus/internal/xray_core/common/serial"
 )
 
 var _ buf.Writer = (*connection)(nil)

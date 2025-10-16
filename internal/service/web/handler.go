@@ -2,9 +2,11 @@ package web
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
-	"liuproxy_gateway/internal/shared/globalstate"
-	"liuproxy_gateway/internal/shared/logger"
+	"liuproxy_nexus/internal/shared/globalstate"
+	"liuproxy_nexus/internal/shared/logger"
+	"liuproxy_nexus/proxypool/model"
 	"net/http"
 	"os"
 	"strconv"
@@ -12,8 +14,8 @@ import (
 	"sync"
 
 	"github.com/google/uuid"
-	"liuproxy_gateway/internal/shared/settings"
-	"liuproxy_gateway/internal/shared/types"
+	"liuproxy_nexus/internal/shared/settings"
+	"liuproxy_nexus/internal/shared/types"
 )
 
 // ServerController defines the interface that the web handler uses to interact with the AppServer.
@@ -31,6 +33,12 @@ type ServerController interface {
 	GetRecentClientIPs() []string
 	GetRecentTargets() []string
 	ApplyChanges() error
+	GetAvailableProxiesFromPool(count int, protocol string) []*model.ProxyInfo
+	GetAllProxyPoolStatus() []*types.ProxyPoolStatusItem
+	ImportAndValidateProxies(proxyList []string, protocol string) error
+	GetAllProxiesFromPool() []*model.ProxyInfo
+	TriggerProxyValidation(ids []string) error
+	DeleteProxiesFromPool(ids []string) error
 }
 
 // --- 新的系统环境 API ---
@@ -436,4 +444,167 @@ func (h *Handler) deleteServer(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusOK)
+}
+
+// HandleGetAvailableProxies handles GET /api/proxypool/available requests.
+func (h *Handler) HandleGetAvailableProxies(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// Read protocol from query parameter, default to "http"
+	protocol := r.URL.Query().Get("protocol")
+	if protocol != "http" && protocol != "socks5" {
+		protocol = "http" // Safe default
+	}
+
+	// For now, we fetch one proxy at a time.
+	count := 1
+
+	proxies := h.controller.GetAvailableProxiesFromPool(count, protocol)
+	if proxies == nil {
+		proxies = []*model.ProxyInfo{} // Return empty array instead of null
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(proxies)
+}
+
+// HandleGetProxyPoolAll handles GET /api/proxypool/all requests.
+// It returns a list of all healthy proxies from the pool with their usage status.
+func (h *Handler) HandleGetProxyPoolAll(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// 1. Get all proxies from the pool
+	allProxies := h.controller.GetAllProxiesFromPool()
+
+	// 2. Get the usage status
+	// (This part is simplified from appserver.go's GetAllProxyPoolStatus)
+	usedIPPorts := make(map[string]string)
+	allProfiles := h.controller.GetAllServerProfilesSorted()
+	for _, profile := range allProfiles {
+		if profile.Type == "http" {
+			addr := fmt.Sprintf("%s:%d", profile.Address, profile.Port)
+			usedIPPorts[addr] = profile.Remarks
+		}
+	}
+
+	// 3. Combine information
+	statusItems := make([]*types.ProxyPoolStatusItem, 0, len(allProxies))
+	for _, proxy := range allProxies {
+		ipPortKey := fmt.Sprintf("%s:%d", proxy.IP, proxy.Port)
+		item := &types.ProxyPoolStatusItem{
+			ProxyInfo: *proxy,
+			Status:    "Idle",
+		}
+		if remarks, inUse := usedIPPorts[ipPortKey]; inUse {
+			item.Status = "In Use"
+			item.InUseBy = remarks
+		}
+		statusItems = append(statusItems, item)
+	}
+
+	if statusItems == nil {
+		statusItems = []*types.ProxyPoolStatusItem{}
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(statusItems)
+}
+
+// HandleImportProxies handles POST /api/proxypool/import requests.
+func (h *Handler) HandleImportProxies(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var request struct {
+		Protocol string   `json:"protocol"`
+		Proxies  []string `json:"proxies"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+		http.Error(w, "Invalid JSON format", http.StatusBadRequest)
+		return
+	}
+
+	if request.Protocol != "http" && request.Protocol != "socks5" {
+		http.Error(w, "Invalid protocol specified. Must be 'http' or 'socks5'.", http.StatusBadRequest)
+		return
+	}
+
+	if len(request.Proxies) == 0 {
+		http.Error(w, "Proxy list cannot be empty.", http.StatusBadRequest)
+		return
+	}
+
+	// Call the controller to handle the import and validation logic in the background.
+	if err := h.controller.ImportAndValidateProxies(request.Proxies, request.Protocol); err != nil {
+		http.Error(w, "Failed to start import process: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusAccepted)
+	json.NewEncoder(w).Encode(map[string]string{
+		"message": fmt.Sprintf("Accepted %d proxies for validation in the background.", len(request.Proxies)),
+	})
+}
+
+// HandleValidateProxies handles POST /api/proxypool/validate requests.
+func (h *Handler) HandleValidateProxies(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var ids []string
+	if err := json.NewDecoder(r.Body).Decode(&ids); err != nil {
+		http.Error(w, "Invalid JSON format for proxy IDs", http.StatusBadRequest)
+		return
+	}
+
+	if len(ids) == 0 {
+		http.Error(w, "ID list cannot be empty", http.StatusBadRequest)
+		return
+	}
+
+	if err := h.controller.TriggerProxyValidation(ids); err != nil {
+		http.Error(w, "Failed to trigger validation: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusAccepted)
+	json.NewEncoder(w).Encode(map[string]string{"message": "Validation triggered in the background."})
+}
+
+// HandleDeleteProxies handles DELETE /api/proxypool/delete requests.
+func (h *Handler) HandleDeleteProxies(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodDelete {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var ids []string
+	if err := json.NewDecoder(r.Body).Decode(&ids); err != nil {
+		http.Error(w, "Invalid JSON format for proxy IDs", http.StatusBadRequest)
+		return
+	}
+
+	if len(ids) == 0 {
+		http.Error(w, "ID list cannot be empty", http.StatusBadRequest)
+		return
+	}
+
+	if err := h.controller.DeleteProxiesFromPool(ids); err != nil {
+		http.Error(w, "Failed to delete proxies: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]string{"message": "Proxies deleted successfully."})
 }

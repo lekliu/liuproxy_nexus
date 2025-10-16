@@ -4,7 +4,7 @@ package web
 import (
 	"encoding/json"
 	"github.com/gorilla/websocket"
-	"liuproxy_gateway/internal/shared/logger"
+	"liuproxy_nexus/internal/shared/logger"
 	"net/http"
 	"sync"
 	"time"

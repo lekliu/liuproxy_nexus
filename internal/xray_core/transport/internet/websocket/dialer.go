@@ -3,16 +3,16 @@ package websocket
 
 import (
 	"context"
-	"liuproxy_gateway/internal/shared/logger"
-	"liuproxy_gateway/internal/xray_core/common/errors"
+	"liuproxy_nexus/internal/shared/logger"
+	"liuproxy_nexus/internal/xray_core/common/errors"
 	gonet "net"
 	"time"
 
 	"github.com/gorilla/websocket"
-	"liuproxy_gateway/internal/xray_core/common"
-	"liuproxy_gateway/internal/xray_core/common/net"
-	"liuproxy_gateway/internal/xray_core/transport/internet"
-	"liuproxy_gateway/internal/xray_core/transport/internet/tls"
+	"liuproxy_nexus/internal/xray_core/common"
+	"liuproxy_nexus/internal/xray_core/common/net"
+	"liuproxy_nexus/internal/xray_core/transport/internet"
+	"liuproxy_nexus/internal/xray_core/transport/internet/tls"
 )
 
 // Dial dials a WebSocket connection to the given destination.

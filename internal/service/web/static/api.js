@@ -120,3 +120,89 @@ export async function fetchAvailableClientIPs() {
     }
     return response.json();
 }
+
+/**
+ * Fetches a single available proxy from the backend proxy pool.
+ * @returns {Promise<object|null>} A single proxy object or null if none are available.
+ */
+export async function fetchAvailableProxy(protocol = 'http') {
+    const response = await fetch(`/api/proxypool/available?protocol=${protocol}`);
+    if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Failed to fetch available proxy: ${errorText}`);
+    }
+    const proxies = await response.json();
+    // The backend returns an array, we just need the first element.
+    return proxies.length > 0 ? proxies[0] : null;
+}
+
+/**
+ * Fetches the status of all healthy proxies in the pool.
+ * @returns {Promise<Array>} A list of proxy status items.
+ */
+export async function fetchProxyPoolStatus() {
+    const response = await fetch('/api/proxypool/all');
+    if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Failed to fetch proxy pool status: ${errorText}`);
+    }
+    return response.json();
+}
+
+/**
+ * Imports a list of proxies to the backend for validation.
+ * @param {string} protocol - The protocol of the proxies ('http' or 'socks5').
+ * @param {string[]} proxyList - An array of 'IP:Port' strings.
+ */
+export async function importProxies(protocol, proxyList) {
+    const response = await fetch('/api/proxypool/import', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            protocol: protocol,
+            proxies: proxyList,
+        }),
+    });
+
+    if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Failed to import proxies: ${errorText}`);
+    }
+    return response.json();
+}
+
+/**
+ * Sends a request to the backend to validate a list of proxies by their IDs.
+ * @param {string[]} ids - An array of proxy IDs to validate.
+ */
+export async function validateProxies(ids) {
+    const response = await fetch('/api/proxypool/validate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(ids),
+    });
+    if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Failed to trigger validation: ${errorText}`);
+    }
+    return response.json();
+}
+
+/**
+ * Sends a request to the backend to delete a list of proxies by their IDs.
+ * @param {string[]} ids - An array of proxy IDs to delete.
+ */
+export async function deleteProxies(ids) {
+    const response = await fetch('/api/proxypool/delete', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(ids),
+    });
+    if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Failed to delete proxies: ${errorText}`);
+    }
+    return response.json();
+}

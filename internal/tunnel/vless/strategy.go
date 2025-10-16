@@ -9,7 +9,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"golang.org/x/net/proxy"
 	"io"
-	"liuproxy_gateway/internal/shared/logger"
+	"liuproxy_nexus/internal/shared/logger"
 	"net"
 	"net/http"
 	"strings"
@@ -17,7 +17,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"liuproxy_gateway/internal/shared/types"
+	"liuproxy_nexus/internal/shared/types"
 )
 
 // VlessStrategyNative 现在是一个无状态的监听器和分发器。

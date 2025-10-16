@@ -15,7 +15,7 @@ import (
 	"crypto/x509"
 	"encoding/binary"
 	"io"
-	"liuproxy_gateway/internal/shared/logger"
+	"liuproxy_nexus/internal/shared/logger"
 	"math/big"
 	"net/http"
 	"reflect"
@@ -30,9 +30,9 @@ import (
 	"golang.org/x/crypto/chacha20poly1305"
 	"golang.org/x/crypto/hkdf"
 	"golang.org/x/net/http2"
-	"liuproxy_gateway/internal/xray_core/common/errors"
-	"liuproxy_gateway/internal/xray_core/common/net"
-	"liuproxy_gateway/internal/xray_core/transport/internet/tls"
+	"liuproxy_nexus/internal/xray_core/common/errors"
+	"liuproxy_nexus/internal/xray_core/common/net"
+	"liuproxy_nexus/internal/xray_core/transport/internet/tls"
 )
 
 //go:linkname aesgcmPreferred github.com/refraction-networking/utls.aesgcmPreferred

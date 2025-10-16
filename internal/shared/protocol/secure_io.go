@@ -3,7 +3,7 @@ package protocol
 
 import (
 	"io"
-	"liuproxy_gateway/internal/shared/securecrypt"
+	"liuproxy_nexus/internal/shared/securecrypt"
 )
 
 // WriteSecurePacket 负责加密、封装并发送一个协议包。

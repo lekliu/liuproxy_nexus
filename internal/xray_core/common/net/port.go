@@ -1,7 +1,7 @@
 package net
 
 import (
-	"liuproxy_gateway/internal/xray_core/common/errors"
+	"liuproxy_nexus/internal/xray_core/common/errors"
 	"strconv"
 )
 

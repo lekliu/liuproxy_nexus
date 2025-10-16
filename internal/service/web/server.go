@@ -4,15 +4,15 @@ import (
 	"embed"
 	"fmt"
 	"io/fs"
-	"liuproxy_gateway/internal/shared/logger"
-	"liuproxy_gateway/internal/shared/settings"
+	"liuproxy_nexus/internal/shared/logger"
+	"liuproxy_nexus/internal/shared/settings"
 	"log"
 	"net"
 	"net/http"
 	"strings"
 	"sync"
 
-	"liuproxy_gateway/internal/shared/types"
+	"liuproxy_nexus/internal/shared/types"
 )
 
 //go:embed all:static
@@ -83,6 +83,11 @@ func StartServer(
 	mux.Handle("/api/settings", basicAuthMiddleware(http.HandlerFunc(handler.HandleGetSettings), webUser, webPassword))
 	mux.Handle("/api/settings/", basicAuthMiddleware(http.HandlerFunc(handler.HandleUpdateSettings), webUser, webPassword)) // 捕获 /api/settings/{module}
 	mux.Handle("/api/clients", basicAuthMiddleware(http.HandlerFunc(handler.HandleGetClients), webUser, webPassword))
+	mux.Handle("/api/proxypool/available", basicAuthMiddleware(http.HandlerFunc(handler.HandleGetAvailableProxies), webUser, webPassword))
+	mux.Handle("/api/proxypool/all", basicAuthMiddleware(http.HandlerFunc(handler.HandleGetProxyPoolAll), webUser, webPassword))
+	mux.Handle("/api/proxypool/import", basicAuthMiddleware(http.HandlerFunc(handler.HandleImportProxies), webUser, webPassword))
+	mux.Handle("/api/proxypool/validate", basicAuthMiddleware(http.HandlerFunc(handler.HandleValidateProxies), webUser, webPassword))
+	mux.Handle("/api/proxypool/delete", basicAuthMiddleware(http.HandlerFunc(handler.HandleDeleteProxies), webUser, webPassword))
 	mux.Handle("/api/system/env", basicAuthMiddleware(http.HandlerFunc(handler.HandleGetSystemEnv), webUser, webPassword))
 	mux.Handle("/api/recent_targets", basicAuthMiddleware(http.HandlerFunc(handler.HandleGetRecentTargets), webUser, webPassword))
 

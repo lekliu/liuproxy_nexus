@@ -3,22 +3,26 @@ package app
 import (
 	"fmt"
 	"github.com/google/uuid"
-	"liuproxy_gateway/internal/core/dispatcher"
-	"liuproxy_gateway/internal/core/gateway"
-	"liuproxy_gateway/internal/core/health"
-	"liuproxy_gateway/internal/firewall"
-	"liuproxy_gateway/internal/service/web"
-	"liuproxy_gateway/internal/shared/config"
-	"liuproxy_gateway/internal/shared/logger"
-	"liuproxy_gateway/internal/shared/settings"
-	"liuproxy_gateway/internal/tunnel"
+	"liuproxy_nexus/internal/core/dispatcher"
+	"liuproxy_nexus/internal/core/gateway"
+	"liuproxy_nexus/internal/core/health"
+	"liuproxy_nexus/internal/firewall"
+	"liuproxy_nexus/internal/service/web"
+	"liuproxy_nexus/internal/shared/config"
+	"liuproxy_nexus/internal/shared/logger"
+	"liuproxy_nexus/internal/shared/settings"
+	"liuproxy_nexus/internal/tunnel"
+	manager "liuproxy_nexus/proxypool"
+	"liuproxy_nexus/proxypool/model"
+	"liuproxy_nexus/proxypool/storage"
+	"liuproxy_nexus/proxypool/validator"
 	"net"
 	"os"
 	"path/filepath"
 	"sync"
 	"time"
 
-	"liuproxy_gateway/internal/shared/types"
+	"liuproxy_nexus/internal/shared/types"
 )
 
 // AppState 包含 AppServer 的所有动态和半静态状态。
@@ -55,6 +59,7 @@ type AppServer struct {
 	firewall           firewall.Firewall           // <-- 新增
 	healthChecker      *health.Checker
 	healthCheckTicker  *time.Ticker
+	proxyPoolManager   *manager.Manager
 
 	isMobileMode bool // 标记是否为移动模式
 
@@ -71,48 +76,53 @@ type UDPListenerProvider interface {
 	GetUDPListener() net.PacketConn
 }
 
+// --- START OF REPLACEMENT for NewForPC function in liuproxy_nexus/internal/app/appserver.go ---
 // NewForPC creates a new AppServer instance for PC/file-based mode.
 func NewForPC(cfg *types.Config, iniPath, serversPath string) *AppServer {
 	configDir := filepath.Dir(iniPath)
-	settingsPath := filepath.Join(configDir, "settings.json")
+	// Create a temporary s so we can pass it to the settings manager
+	s := &AppServer{
+		cfg:               cfg,
+		iniPath:           iniPath,
+		serversPath:       serversPath,
+		healthChecker:     health.New(false),
+		isMobileMode:      false,
+		configState:       &AppState{Servers: make(map[string]*types.ServerState)},
+		workState:         &AppState{Servers: make(map[string]*types.ServerState)},
+		healthCheckTicker: time.NewTicker(30 * time.Second),
+	}
 
+	settingsPath := filepath.Join(configDir, "settings.json")
 	sm, err := settings.NewSettingsManager(settingsPath)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "FATAL: Failed to initialize settings manager: %v\n", err)
 		os.Exit(1)
 	}
+	s.settingsManager = sm
 
-	hub := web.NewHub() // 创建 Hub
+	hub := web.NewHub() // Create Hub
+	s.hub = hub
 
-	s := &AppServer{
-		cfg:             cfg,
-		iniPath:         iniPath,
-		serversPath:     serversPath,
-		settingsManager: sm,
-		healthChecker:   health.New(false),
-		hub:             hub, // 注入 Hub
-		isMobileMode:    false,
-		// 初始化 A 区和 B 区，防止空指针
-		configState: &AppState{Servers: make(map[string]*types.ServerState)},
-		workState:   &AppState{Servers: make(map[string]*types.ServerState)},
-		// 降低健康检查频率，后续将改为配置驱动
-		healthCheckTicker: time.NewTicker(30 * time.Second),
-	}
-
-	// 创建 Dispatcher 和 Firewall，并注入初始配置
+	// Create Dispatcher and Firewall, and inject initial configuration
 	initialSettings := sm.Get()
 	fw := firewall.NewEngine()
 	s.firewall = fw
 
-	// New Dispatcher 不再需要传递 s 作为 FailureReporter
+	// Initialize Proxy Pool Manager
+	proxiesPath := filepath.Join(configDir, "proxies.json")
+	proxyStorage := storage.NewFileStorage(proxiesPath)
+	proxyValidator := validator.NewValidator(10*time.Second, 5) // Sensible defaults
+	s.proxyPoolManager = manager.NewManager(cfg, proxyStorage, proxyValidator)
+
+	// New Dispatcher now requires the main config and the proxy pool manager
 	disp := dispatcher.New(initialSettings.Gateway, s)
 
-	// 将 Dispatcher 注册为相关模块的订阅者
+	// Register the Dispatcher as a subscriber for relevant modules
 	sm.Register("gateway", disp)
-	sm.Register("routing", disp)
+	// sm.Register("routing", disp) // Dispatcher no longer subscribes to routing
 	sm.Register("firewall", fw)
 
-	// 初始化s.firewall
+	// Initialize s.firewall
 	if err := s.firewall.OnSettingsUpdate("firewall", initialSettings.Firewall); err != nil {
 		fmt.Fprintf(os.Stderr, "FATAL: Failed to initialize firewall with initial settings: %v\n", err)
 		os.Exit(1)
@@ -120,7 +130,7 @@ func NewForPC(cfg *types.Config, iniPath, serversPath string) *AppServer {
 
 	s.dispatcher = disp
 	s.gateway = gateway.New(cfg.LocalConf.UnifiedPort, disp, s.hub)
-	s.transparentGateway = gateway.NewTransparent(cfg.LocalConf.TProxyPort, fw, disp, s.hub) // <-- 新增: 创建透明网关实例
+	s.transparentGateway = gateway.NewTransparent(cfg.LocalConf.TProxyPort, fw, disp, s.hub)
 
 	return s
 }
@@ -128,27 +138,28 @@ func NewForPC(cfg *types.Config, iniPath, serversPath string) *AppServer {
 // NewForMobile creates a new AppServer instance for mobile/in-memory mode.
 func NewForMobile(cfg *types.Config) *AppServer {
 	// For mobile, settings manager runs in-memory without a file path.
+	// Create a temporary s so we can pass it to the settings manager
+	s := &AppServer{
+		cfg:               cfg,
+		iniPath:           "", // No file paths in mobile mode
+		serversPath:       "",
+		healthChecker:     health.New(true),
+		isMobileMode:      true,
+		configState:       &AppState{Servers: make(map[string]*types.ServerState)},
+		workState:         &AppState{Servers: make(map[string]*types.ServerState)},
+		healthCheckTicker: time.NewTicker(30 * time.Second),
+	}
+
 	sm, err := settings.NewSettingsManager("")
 	if err != nil {
 		// This should theoretically not fail in memory mode, but we handle it.
 		fmt.Fprintf(os.Stderr, "FATAL: Failed to initialize in-memory settings manager: %v\n", err)
 		os.Exit(1) // A failure here is unrecoverable.
 	}
+	s.settingsManager = sm
 
 	hub := web.NewHub()
-
-	s := &AppServer{
-		cfg:               cfg,
-		iniPath:           "", // No file paths in mobile mode
-		serversPath:       "",
-		settingsManager:   sm,
-		healthChecker:     health.New(true),
-		hub:               hub,
-		isMobileMode:      true,
-		configState:       &AppState{Servers: make(map[string]*types.ServerState)},
-		workState:         &AppState{Servers: make(map[string]*types.ServerState)},
-		healthCheckTicker: time.NewTicker(30 * time.Second),
-	}
+	s.hub = hub
 
 	// In mobile mode, firewall is not used, so we create a dummy one.
 	// Dispatcher is still needed for routing logic.
@@ -221,6 +232,11 @@ func (s *AppServer) Run() {
 
 	s.dispatcher.(*dispatcher.Dispatcher).Start()
 
+	// Start the proxy pool manager's background tasks
+	if s.proxyPoolManager != nil {
+		go s.proxyPoolManager.Start()
+	}
+
 	s.waitGroup.Add(1)
 	go s.statsLoop()
 
@@ -266,6 +282,11 @@ func (s *AppServer) Stop() {
 		if s.healthCheckTicker != nil {
 			s.healthCheckTicker.Stop()
 		}
+
+		if s.proxyPoolManager != nil {
+			s.proxyPoolManager.Stop()
+		}
+
 		s.configLock.Lock()
 		defer s.configLock.Unlock()
 
@@ -645,4 +666,123 @@ func (s *AppServer) statsLoop() {
 // GetIniPath returns the path to the ini config file.
 func (s *AppServer) GetIniPath() string {
 	return s.iniPath
+}
+
+// *********** 1/1 MODIFICATION START: Implement the new business filtering logic ***********
+// GetAvailableProxiesFromPool fetches healthy proxies from the pool, filtering by protocol
+// and excluding any IP:Port combinations that are already configured as servers.
+func (s *AppServer) GetAvailableProxiesFromPool(count int, protocol string) []*model.ProxyInfo {
+	if s.proxyPoolManager == nil {
+		return nil
+	}
+
+	// 1. Get all IP addresses that are already in use by configured servers.
+	s.configLock.RLock()
+	usedIPs := make(map[string]struct{})
+	for _, serverState := range s.configState.Servers {
+		// We only care about the IP address, regardless of port or server type.
+		if serverState.Profile.Address != "" {
+			usedIPs[serverState.Profile.Address] = struct{}{}
+		}
+	}
+	s.configLock.RUnlock()
+
+	// 2. Get a generous list of healthy proxies from the pool to ensure we have enough after filtering.
+	allAvailable := s.proxyPoolManager.GetAvailableProxies(300) // Fetch even more to have options
+
+	// 3. Filter the list.
+	filteredProxies := make([]*model.ProxyInfo, 0)
+	for _, p := range allAvailable {
+		// A. Filter by the requested protocol.
+		if p.VerifiedProtocol != protocol {
+			continue
+		}
+
+		// B. Filter by usage: check if the IP is already in our used set.
+		if _, exists := usedIPs[p.IP]; !exists {
+			// If the IP is not used, this proxy is available.
+			filteredProxies = append(filteredProxies, p)
+		}
+	}
+
+	// 4. Return the requested count.
+	if len(filteredProxies) > count {
+		return filteredProxies[:count]
+	}
+	return filteredProxies
+}
+
+// GetAllProxyPoolStatus returns a list of all healthy proxies from the pool,
+// along with their current usage status in the application.
+func (s *AppServer) GetAllProxyPoolStatus() []*types.ProxyPoolStatusItem {
+	if s.proxyPoolManager == nil {
+		return []*types.ProxyPoolStatusItem{} // Return empty slice instead of nil for safety
+	}
+
+	// 1. Create a lookup map of currently used IP:Port -> Remarks from configured servers.
+	s.configLock.RLock()
+	usedIPPorts := make(map[string]string)
+	for _, serverState := range s.configState.Servers {
+		// We only care about servers that could have been configured from the pool (http/socks5 proxy types).
+		if serverState.Profile.Type == "http" {
+			addr := fmt.Sprintf("%s:%d", serverState.Profile.Address, serverState.Profile.Port)
+			usedIPPorts[addr] = serverState.Profile.Remarks
+		}
+	}
+	s.configLock.RUnlock()
+
+	// 2. Get all healthy proxies from the pool (SuccessCount > 0).
+	healthyProxies := s.proxyPoolManager.GetAvailableProxies(9999) // Use a large number to get all.
+
+	// 3. Build the final status list by combining proxy info with usage status.
+	statusItems := make([]*types.ProxyPoolStatusItem, 0, len(healthyProxies))
+	for _, proxy := range healthyProxies {
+		ipPortKey := fmt.Sprintf("%s:%d", proxy.IP, proxy.Port)
+
+		item := &types.ProxyPoolStatusItem{
+			ProxyInfo: *proxy,
+			Status:    "Idle", // Default to Idle
+		}
+
+		if remarks, inUse := usedIPPorts[ipPortKey]; inUse {
+			item.Status = "In Use"
+			item.InUseBy = remarks
+		}
+
+		statusItems = append(statusItems, item)
+	}
+
+	return statusItems
+}
+
+// ImportAndValidateProxies delegates the proxy import request to the proxy pool manager.
+func (s *AppServer) ImportAndValidateProxies(proxyList []string, protocol string) error {
+	if s.proxyPoolManager == nil {
+		return fmt.Errorf("proxy pool manager is not initialized")
+	}
+	return s.proxyPoolManager.ImportAndValidateProxies(proxyList, protocol)
+}
+
+// GetAllProxiesFromPool retrieves all proxies from the manager.
+func (s *AppServer) GetAllProxiesFromPool() []*model.ProxyInfo {
+	if s.proxyPoolManager == nil {
+		return []*model.ProxyInfo{}
+	}
+	return s.proxyPoolManager.GetAllProxies()
+}
+
+// TriggerProxyValidation delegates a request to validate specific proxies to the manager.
+func (s *AppServer) TriggerProxyValidation(ids []string) error {
+	if s.proxyPoolManager == nil {
+		return fmt.Errorf("proxy pool manager is not initialized")
+	}
+	return s.proxyPoolManager.TriggerValidation(ids)
+}
+
+// DeleteProxiesFromPool delegates a request to delete specific proxies to the manager.
+func (s *AppServer) DeleteProxiesFromPool(ids []string) error {
+	if s.proxyPoolManager == nil {
+		return fmt.Errorf("proxy pool manager is not initialized")
+	}
+	return s.proxyPoolManager.DeleteProxies(ids)
 }

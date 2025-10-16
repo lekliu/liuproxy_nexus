@@ -8,7 +8,7 @@ import (
 	"net"
 	"strconv"
 
-	"liuproxy_gateway/internal/shared/types"
+	"liuproxy_nexus/internal/shared/types"
 )
 
 // Agent for the worker package is a simplified version.

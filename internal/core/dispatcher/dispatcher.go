@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 	"github.com/rs/zerolog/log"
-	"liuproxy_gateway/internal/shared/settings"
-	"liuproxy_gateway/internal/shared/types"
+	"liuproxy_nexus/internal/shared/settings"
+	"liuproxy_nexus/internal/shared/types"
 	"math"
 	"net"
 	"net/netip"
@@ -158,19 +158,18 @@ func (d *Dispatcher) OnSettingsUpdate(moduleKey string, newSettings interface{})
 			return fmt.Errorf("dispatcher: received incorrect settings type for gateway module")
 		}
 
-		// 停止旧的 StickyManager 的后台任务
+		// Stop the old StickyManager's background tasks
 		oldManager := d.getStickyManager()
 		oldManager.Stop()
 
-		// 创建一个全新的 StickyManager 实例
+		// Create a brand new StickyManager instance
 		newStickyManager := NewStickyManager(cfg)
-		newStickyManager.Start() // 启动新的后台任务
+		newStickyManager.Start() // Start the new background tasks
 
-		// 原子地替换掉旧的实例
+		// Atomically replace the old instance
 		d.stickyManager.Store(newStickyManager)
-		//log.Info().Msg("Dispatcher: Sticky session settings have been reloaded.")
 
-		// 更新负载均衡策略
+		// Update load balancer strategy
 		d.updateLoadBalancer(cfg.LoadBalancerStrategy)
 
 	case "routing":
@@ -241,7 +240,18 @@ func (d *Dispatcher) Dispatch(ctx context.Context, source net.Addr, target strin
 				}
 			}
 		case string(settings.RuleTypeSourceIP):
-			for _, cidr := range rule.Value {
+			for _, val := range rule.Value {
+				cidr := val
+				if !strings.Contains(cidr, "/") {
+					if ip := net.ParseIP(cidr); ip != nil {
+						if ip.To4() != nil {
+							cidr += "/32"
+						} else {
+							cidr += "/128"
+						}
+					}
+				}
+
 				prefix, err := netip.ParsePrefix(cidr)
 				if err == nil && prefix.Contains(clientIP) {
 					matched = true
@@ -396,7 +406,8 @@ func (d *Dispatcher) GetRecentTargets(rules []*settings.Rule) []string {
 	return result
 }
 
-// updateRoutingTables 根据最新的路由配置和服务器状态，重建内部路由表。
+// UpdateRoutingTables rebuilds the internal routing tables based on a provided list of compiled rules.
+// It is called by AppServer after all dynamic rules have been processed.
 func (d *Dispatcher) updateRoutingTables(cfg *settings.RoutingSettings) {
 	d.strategyMutex.Lock()
 	defer d.strategyMutex.Unlock()
@@ -410,7 +421,7 @@ func (d *Dispatcher) updateRoutingTables(cfg *settings.RoutingSettings) {
 		routeInfo := &RouteInfo{}
 		if rule.Target == "DIRECT" || rule.Target == "REJECT" {
 			routeInfo.ServerID = rule.Target
-			routeInfo.Strategy = nil // Strategy 为 nil
+			routeInfo.Strategy = nil // Strategy is nil
 		} else {
 			var targetState *types.ServerState
 			for _, state := range serverStates {

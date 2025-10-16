@@ -3,7 +3,7 @@ package gateway
 import (
 	"bufio"
 	"io"
-	"liuproxy_gateway/internal/shared/logger"
+	"liuproxy_nexus/internal/shared/logger"
 	"net"
 	"sync"
 	"time"

@@ -1,4 +1,5 @@
 import { serversCache, logMessages } from './state.js';
+import { fetchAvailableProxy } from './api.js';
 
 // --- UI Element References ---
 const serverListBody = document.getElementById('server-list');
@@ -18,6 +19,7 @@ export const ruleForm = document.getElementById('rule-form');
 const ruleDialogTitle = document.getElementById('rule-dialog-title');
 const ruleIndexInput = document.getElementById('rule-index');
 const ruleTargetSelect = document.getElementById('rule-target');
+// const protocolSelect = document.getElementById('proxy_protocol');
 
 /**
  * Escapes HTML to prevent XSS.
@@ -224,6 +226,41 @@ export function showDialog(server = null) {
     }
     updateFormVisibility();
     dialog.showModal();
+
+ // --- Add listener for the new button ---
+    const fetchBtn = document.getElementById('fetch-from-pool-btn');
+    const protocolSelect = document.getElementById('proxy_protocol');
+    // We need to remove and re-add the listener each time the dialog opens to avoid duplicates
+    const fetchHandler = async () => {
+        const selectedProtocol = protocolSelect.value;
+        try {
+            fetchBtn.textContent = 'Fetching...';
+            fetchBtn.disabled = true;
+            const proxy = await fetchAvailableProxy(selectedProtocol);
+            if (proxy) {
+                form.elements.address.value = proxy.ip;
+                form.elements.port.value = proxy.port;
+                updateStatusMessage(`Fetched proxy ${proxy.ip}:${proxy.port} from pool.`);
+            } else {
+                alert('No available new proxies in the pool. Please wait for the next scrape cycle or check the proxy pool status.');
+                updateStatusMessage('Proxy pool has no new available proxies.');
+            }
+        } catch (error) {
+            alert('Error fetching from proxy pool: ' + error.message);
+        } finally {
+            fetchBtn.textContent = 'Fetch from Proxy Pool';
+            fetchBtn.disabled = false;
+        }
+    };
+
+    // Create a new controller for each dialog instance to manage the event listener
+    const controller = new AbortController();
+    fetchBtn.addEventListener('click', fetchHandler, { signal: controller.signal });
+
+    // When the dialog closes, remove the event listener
+    dialog.addEventListener('close', () => {
+        controller.abort();
+    }, { once: true });
 }
 
 export function closeDialog() {
@@ -297,6 +334,7 @@ export function hideApplyBanner() {
 
 export function populateRuleTargetOptions(servers) {
     ruleTargetSelect.innerHTML = `<option value="DIRECT">DIRECT</option><option value="REJECT">REJECT</option>`;
+
     servers.forEach(server => {
         const option = document.createElement('option');
         option.value = server.remarks;

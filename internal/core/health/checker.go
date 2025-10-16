@@ -1,8 +1,8 @@
 package health
 
 import (
-	"liuproxy_gateway/internal/shared/logger"
-	"liuproxy_gateway/internal/shared/types"
+	"liuproxy_nexus/internal/shared/logger"
+	"liuproxy_nexus/internal/shared/types"
 	"sync"
 	"time"
 )

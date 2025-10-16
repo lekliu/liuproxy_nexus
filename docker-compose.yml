@@ -19,8 +19,8 @@
 services:
   gateway:
     platform: linux/amd64
-    image: liuproxy-gateway:latest
-    container_name: liuproxy_gateway_service
+    image: liuproxy-nexus:latest
+    container_name: liuproxy_nexus_service
     build:
       context: .
       dockerfile: Dockerfile

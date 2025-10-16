@@ -3,10 +3,10 @@ package worker
 import (
 	"bufio"
 	"fmt"
-	"liuproxy_gateway/internal/shared"
-	"liuproxy_gateway/internal/shared/globalstate"
-	protocol2 "liuproxy_gateway/internal/shared/protocol"
-	"liuproxy_gateway/internal/shared/types"
+	"liuproxy_nexus/internal/shared"
+	"liuproxy_nexus/internal/shared/globalstate"
+	protocol2 "liuproxy_nexus/internal/shared/protocol"
+	"liuproxy_nexus/internal/shared/types"
 	"net"
 	"sync"
 )

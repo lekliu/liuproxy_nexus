@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
-	"liuproxy_gateway/internal/shared"
+	"liuproxy_nexus/internal/shared"
 )
 
 // Dial 负责为 Worker 策略建立 WebSocket 连接。

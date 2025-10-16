@@ -3,10 +3,10 @@ package tls
 import (
 	"crypto/tls"
 	"crypto/x509"
-	"liuproxy_gateway/internal/shared/logger"
-	"liuproxy_gateway/internal/xray_core/common/errors"
-	"liuproxy_gateway/internal/xray_core/common/net"
-	"liuproxy_gateway/internal/xray_core/transport/internet"
+	"liuproxy_nexus/internal/shared/logger"
+	"liuproxy_nexus/internal/xray_core/common/errors"
+	"liuproxy_nexus/internal/xray_core/common/net"
+	"liuproxy_nexus/internal/xray_core/transport/internet"
 	"os"
 	"strings"
 )

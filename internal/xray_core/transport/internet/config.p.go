@@ -3,7 +3,7 @@ package internet
 import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/runtime/protoimpl"
-	"liuproxy_gateway/internal/xray_core/common/serial"
+	"liuproxy_nexus/internal/xray_core/common/serial"
 	"reflect"
 	"sync"
 )

@@ -2,8 +2,6 @@ package httpproxy
 
 import (
 	"bufio"
-	"bytes"
-	"context"
 	"encoding/base64"
 	"encoding/binary"
 	"fmt"
@@ -12,17 +10,14 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
-	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
 
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
-	"golang.org/x/net/proxy"
-
-	"liuproxy_gateway/internal/shared"
-	"liuproxy_gateway/internal/shared/types"
+	"liuproxy_nexus/internal/shared"
+	"liuproxy_nexus/internal/shared/types"
 )
 
 // HTTPStrategy 实现了 TunnelStrategy 接口，用于连接上游 HTTP 代理。
@@ -71,13 +66,16 @@ func (s *HTTPStrategy) GetSocksConnection() (net.Conn, error) {
 func (s *HTTPStrategy) handleSocksConnection(clientConn net.Conn) {
 	defer clientConn.Close()
 
+	//s.logger.Debug().Msg("DIAGNOSTIC: handleSocksConnection called.")
+
 	// 1. 完成 SOCKS5 握手以获取目标地址
 	reader := bufio.NewReader(clientConn)
 	cmd, targetAddr, err := s.socks5Handshake(clientConn, reader)
 	if err != nil {
-		s.logger.Warn().Err(err).Msg("SOCKS5 handshake failed.")
+		s.logger.Warn().Err(err).Msg("DIAGNOSTIC: SOCKS5 handshake with client failed.")
 		return
 	}
+	//s.logger.Debug().Str("target", targetAddr).Msg("DIAGNOSTIC: SOCKS5 handshake successful.")
 	if cmd != 0x01 { // 仅支持 CONNECT
 		s.logger.Warn().Uint8("cmd", cmd).Msg("Unsupported SOCKS5 command.")
 		return
@@ -85,9 +83,12 @@ func (s *HTTPStrategy) handleSocksConnection(clientConn net.Conn) {
 
 	// 2. 连接到上游 HTTP 代理
 	proxyAddr := net.JoinHostPort(s.profile.Address, strconv.Itoa(s.profile.Port))
+
+	//s.logger.Debug().Str("proxy_addr", proxyAddr).Msg("DIAGNOSTIC: Dialing upstream HTTP proxy...")
+
 	proxyConn, err := net.DialTimeout("tcp", proxyAddr, 10*time.Second)
 	if err != nil {
-		s.logger.Error().Err(err).Str("proxy_addr", proxyAddr).Msg("Failed to dial HTTP proxy.")
+		s.logger.Error().Err(err).Str("proxy_addr", proxyAddr).Msg("DIAGNOSTIC: Failed to dial upstream HTTP proxy.")
 		if s.stateManager != nil {
 			s.stateManager.SetServerStatusDown(s.profile.ID, err.Error())
 		}
@@ -111,17 +112,19 @@ func (s *HTTPStrategy) handleSocksConnection(clientConn net.Conn) {
 	}
 	connectReq.Header.Set("User-Agent", "liuproxy-client/1.0")
 
+	//s.logger.Debug().Str("target", targetAddr).Msg("DIAGNOSTIC: Sending HTTP CONNECT request to upstream proxy...")
 	if err := connectReq.Write(proxyConn); err != nil {
-		s.logger.Error().Err(err).Msg("Failed to write CONNECT request to proxy.")
+		s.logger.Error().Err(err).Msg("DIAGNOSTIC: Failed to write CONNECT request to proxy.")
 		clientConn.Write([]byte{0x05, 0x01, 0x00, 0x01, 0, 0, 0, 0, 0, 0}) // General server failure
 		return
 	}
 
 	// 4. 读取并验证 CONNECT 响应
+	//s.logger.Debug().Msg("DIAGNOSTIC: Reading response from upstream proxy...")
 	br := bufio.NewReader(proxyConn)
 	resp, err := http.ReadResponse(br, connectReq)
 	if err != nil {
-		s.logger.Error().Err(err).Msg("Failed to read CONNECT response from proxy.")
+		s.logger.Error().Err(err).Msg("DIAGNOSTIC: Failed to read CONNECT response from proxy.")
 		clientConn.Write([]byte{0x05, 0x01, 0x00, 0x01, 0, 0, 0, 0, 0, 0})
 		return
 	}
@@ -216,58 +219,20 @@ func (d *pipeDialer) Dial(network, addr string) (net.Conn, error) {
 	return d.conn, nil
 }
 
-// CheckHealthAdvanced 实现了高级健康检查
 func (s *HTTPStrategy) CheckHealthAdvanced() (latency int64, exitIP string, err error) {
-	pipeConn, err := s.GetSocksConnection()
-	if err != nil {
-		return -1, "", fmt.Errorf("http CheckHealth: failed to get pipe connection: %w", err)
-	}
-	defer pipeConn.Close()
-
-	dialer, err := proxy.SOCKS5("tcp", "placeholder:1080", nil, &pipeDialer{conn: pipeConn})
-	if err != nil {
-		return -1, "", fmt.Errorf("http CheckHealth: failed to create SOCKS5 dialer: %w", err)
-	}
-
-	transport := &http.Transport{
-		DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
-			return dialer.Dial(network, addr)
-		},
-		DisableKeepAlives: true,
-	}
-	client := &http.Client{
-		Transport: transport,
-		Timeout:   10 * time.Second,
-	}
-
-	const healthCheckURL = "https://www.cloudflare.com/cdn-cgi/trace"
+	// Simple TCP dial check for maximum reliability.
 	start := time.Now()
-	resp, err := client.Get(healthCheckURL)
+	proxyAddr := net.JoinHostPort(s.profile.Address, strconv.Itoa(s.profile.Port))
+
+	conn, err := net.DialTimeout("tcp", proxyAddr, 5*time.Second)
 	if err != nil {
-		return -1, "", fmt.Errorf("http CheckHealth: http get failed: %w", err)
+		return -1, "", err
 	}
-	defer resp.Body.Close()
+	conn.Close()
 
 	latencyMs := time.Since(start).Milliseconds()
-
-	if resp.StatusCode != http.StatusOK {
-		return latencyMs, "", fmt.Errorf("http CheckHealth: unexpected status code: %d", resp.StatusCode)
-	}
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return latencyMs, "", fmt.Errorf("http CheckHealth: failed to read response body: %w", err)
-	}
-
-	scanner := bufio.NewScanner(bytes.NewReader(body))
-	for scanner.Scan() {
-		line := scanner.Text()
-		if strings.HasPrefix(line, "ip=") {
-			exitIP = strings.TrimPrefix(line, "ip=")
-			break
-		}
-	}
-	return latencyMs, exitIP, nil
+	// Return a special string to indicate that this was just a TCP check.
+	return latencyMs, "tcp_dial_ok", nil
 }
 
 // socks5Handshake (辅助函数)

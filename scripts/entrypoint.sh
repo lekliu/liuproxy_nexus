@@ -75,4 +75,4 @@ fi
 
 # 4. 使用 exec 启动主程序
 echo "Starting LiuProxy Gateway..."
-exec /app/liuproxy-gateway --configdir /app/configs
+exec /app/liuproxy-nexus --configdir /app/configs

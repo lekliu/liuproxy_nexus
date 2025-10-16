@@ -3,8 +3,8 @@ package buf
 import (
 	"io"
 
-	"liuproxy_gateway/internal/xray_core/common"
-	"liuproxy_gateway/internal/xray_core/common/serial"
+	"liuproxy_nexus/internal/xray_core/common"
+	"liuproxy_nexus/internal/xray_core/common/serial"
 )
 
 // MultiBuffer is a list of Buffers. The order of Buffer matters.

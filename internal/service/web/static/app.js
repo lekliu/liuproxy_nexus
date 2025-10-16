@@ -1,10 +1,11 @@
 import { serversCache, clearLogMessages } from './state.js';
-import { fetchServers, fetchStatus, saveSettings, applyChanges } from './api.js';
+import { fetchServers, fetchStatus, saveSettings, applyChanges, importProxies } from './api.js';
 import { initializeSettingsPage, loadSettings, saveRuleToCache, getRoutingSettingsData, initializeFirewallPage } from './settings.js';
 import { initializeMonitorPage } from './monitor.js';
 import { initializeDashboardPage } from './dashboard.js';
+import { initializeProxyPoolPage } from './proxy-pool.js';
 import {
-    form, 
+    form,
     ruleForm,
     showDialog,
     closeDialog,
@@ -23,6 +24,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- UI Element References ---
     const mainDashboard = document.getElementById('main-dashboard');
     const mainServers = document.getElementById('main-servers');
+    const mainProxyPool = document.getElementById('main-proxy-pool');
     const mainGateway = document.getElementById('main-gateway');
     const mainRouting = document.getElementById('main-routing');
     const mainFirewall = document.getElementById('main-firewall');
@@ -30,6 +32,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const navDashboardLink = document.getElementById('nav-dashboard');
     const navServersLink = document.getElementById('nav-servers');
+    const navProxyPoolLink = document.getElementById('nav-proxy-pool');
     const navGatewayLink = document.getElementById('nav-gateway');
     const navRoutingLink = document.getElementById('nav-routing');
     const navFirewallLink = document.getElementById('nav-firewall');
@@ -47,18 +50,25 @@ document.addEventListener('DOMContentLoaded', () => {
     const cancelRuleBtn = document.getElementById('cancel-rule-btn');
     const applyChangesBtn = document.getElementById('apply-changes-btn');
 
-    // --- NEW: References for filtering and sorting ---
+    // --- 代理池导入对话框的引用 ---
+    const showImportDialogBtn = document.getElementById('show-import-dialog-btn');
+    const importProxyDialog = document.getElementById('import-proxy-dialog');
+    const importProxyForm = document.getElementById('import-proxy-form');
+    const cancelImportBtn = document.getElementById('cancel-import-btn');
+
+    // --- References for filtering and sorting ---
     const serverFilterInput = document.getElementById('server-filter-input');
     const remarksHeader = document.getElementById('remarks-header');
     const latencyHeader = document.getElementById('latency-header');
 
     // --- State Management ---
     let statusInterval = null;
-    let currentFilterText = ''; // Persisted filter text
-    let currentSortBy = 'remarks';    // Persisted sort column
-    let currentSortDir = 'asc';       // Persisted sort direction
+    let proxyPoolInterval = null;
+    let currentFilterText = '';
+    let currentSortBy = 'remarks';
+    let currentSortDir = 'asc';
 
-    // --- Core Functions ---
+// --- Core Functions (恢复原始逻辑) ---
     async function startStatusPolling() {
         if (statusInterval) clearInterval(statusInterval);
 
@@ -69,13 +79,14 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         poll(); // Fetch immediately
-        statusInterval = setInterval(poll, 3000); // Then poll every 3 seconds
+        statusInterval = setInterval(poll, 3000);
     }
 
-    function showPage(pageName) {
-         // Hide all main sections
+function showPage(pageName) {
+        // Hide all main sections
         mainDashboard.style.display = 'none';
         mainServers.style.display = 'none';
+        mainProxyPool.style.display = 'none';
         mainGateway.style.display = 'none';
         mainRouting.style.display = 'none';
         mainFirewall.style.display = 'none';
@@ -84,22 +95,28 @@ document.addEventListener('DOMContentLoaded', () => {
         // Deactivate all nav links
         navDashboardLink.classList.remove('active');
         navServersLink.classList.remove('active');
+        navProxyPoolLink.classList.remove('active');
         navGatewayLink.classList.remove('active');
         navRoutingLink.classList.remove('active');
         navFirewallLink.classList.remove('active');
         navMonitorLink.classList.remove('active');
+
+        if (proxyPoolInterval) {
+            clearInterval(proxyPoolInterval);
+            proxyPoolInterval = null;
+        }
 
         // Show the selected page and activate the corresponding link
         switch (pageName) {
             case 'gateway':
                 mainGateway.style.display = 'block';
                 navGatewayLink.classList.add('active');
-                loadSettings(); // Load settings for this page
+                loadSettings();
                 break;
             case 'routing':
                 mainRouting.style.display = 'block';
                 navRoutingLink.classList.add('active');
-                loadSettings(); // Also load settings for this page
+                loadSettings();
                 break;
             case 'firewall':
                 mainFirewall.style.display = 'block';
@@ -109,6 +126,13 @@ document.addEventListener('DOMContentLoaded', () => {
             case 'monitor':
                 mainMonitor.style.display = 'block';
                 navMonitorLink.classList.add('active');
+                break;
+            case 'proxy-pool':
+                mainProxyPool.style.display = 'block';
+                navProxyPoolLink.classList.add('active');
+                initializeProxyPoolPage();
+                // const pollFunc = initializeProxyPoolPage();
+                // proxyPoolInterval = setInterval(pollFunc, 5000);
                 break;
             case 'servers':
                 mainServers.style.display = 'block';
@@ -125,12 +149,12 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Event Listeners ---
     navDashboardLink.addEventListener('click', (e) => { e.preventDefault(); showPage('dashboard'); });
     navServersLink.addEventListener('click', (e) => { e.preventDefault(); showPage('servers'); });
+    navProxyPoolLink.addEventListener('click', (e) => { e.preventDefault(); showPage('proxy-pool'); });
     navGatewayLink.addEventListener('click', (e) => { e.preventDefault(); showPage('gateway'); });
     navRoutingLink.addEventListener('click', (e) => { e.preventDefault(); showPage('routing'); });
     navFirewallLink.addEventListener('click', (e) => { e.preventDefault(); showPage('firewall'); });
     navMonitorLink.addEventListener('click', (e) => { e.preventDefault(); showPage('monitor'); });
 
-    // --- Filter input listener ---
     serverFilterInput.addEventListener('input', () => {
         currentFilterText = serverFilterInput.value;
         renderServers(currentFilterText, currentSortBy, currentSortDir);
@@ -185,7 +209,7 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault();
         const serverData = getFormServerData();
         const id = form.elements.id.value; // 从form元素中获取id
-        
+
         const method = id ? 'PUT' : 'POST';
         const url = id ? `/api/servers?id=${id}` : '/api/servers';
 
@@ -215,8 +239,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Event delegation for server list actions
     serverListBody.addEventListener('click', async (e) => {
         const target = e.target;
-        // Handle clicks inside the "more actions" menu
-        const actionTarget = target.closest('a') || target;
+        const actionTarget = target.closest('button');
+        if (!actionTarget) return;
+
         const id = actionTarget.dataset.id;
         if (!id) return;
 
@@ -227,9 +252,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     const response = await fetch(`/api/servers?id=${id}`, { method: 'DELETE' });
                     if (!response.ok) throw new Error('Failed to delete');
                     await fetchServers();
-                    // Use persisted state after fetching
                     renderServers(currentFilterText, currentSortBy, currentSortDir);
-                    showApplyBanner();    // 显示横幅
+                    showApplyBanner();
                     updateStatusMessage('Server deletion saved. Click "Apply Changes".');
                 } catch (error) {
                     alert('Error deleting server: ' + error.message);
@@ -238,7 +262,6 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (actionTarget.classList.contains('edit-btn')) {
             const serverToEdit = serversCache.find(s => s.id === id);
             if (serverToEdit) {
-                // 如果是 goremote 类型且没有设置连接数，则默认为1
                 if (serverToEdit.type === 'goremote' && !serverToEdit.goremote_connections) {
                     serverToEdit.goremote_connections = 1;
                 }
@@ -252,9 +275,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     const errorText = await response.text();
                     throw new Error(`Failed to duplicate: ${errorText}`);
                 }
-                await fetchServers(); // Refresh the list from the server
+                await fetchServers();
                 renderServers(currentFilterText, currentSortBy, currentSortDir);
-                showApplyBanner();    // Show the "Apply Changes" banner
+                showApplyBanner();
                 updateStatusMessage('Server duplicated. Click "Apply Changes" to make it live.');
             } catch (error) {
                 alert('Error duplicating server: ' + error.message);
@@ -265,28 +288,21 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 updateStatusMessage(`${actionText} server...`);
                 const response = await fetch(`/api/servers/set_active_state?id=${id}&active=${setActive}`, { method: 'POST' });
-                if (!response.ok) {
-                    throw new Error(`Failed to set active state`);
-                }
-
-                // API调用成功后，从后端重新获取权威列表
+                if (!response.ok) throw new Error(`Failed to set active state`);
                 await fetchServers();
                 renderServers(currentFilterText, currentSortBy, currentSortDir);
-                showApplyBanner(); // 显示横幅
+                showApplyBanner();
                 updateStatusMessage(`Server ${actionText.toLowerCase()} saved. Click "Apply Changes".`);
             } catch (error) {
                 alert(`Error: ${error.message}`);
-                // Re-fetch servers and status to ensure UI consistency on error
                 await fetchServers();
                 await fetchStatus();
                 renderServers(currentFilterText, currentSortBy, currentSortDir);
             }
-        } else if (target.classList.contains('more-actions-btn')) {
-            // ... (more actions logic remains the same) ...
         }
     });
 
-     cancelRuleBtn.addEventListener('click', (e) => {
+    cancelRuleBtn.addEventListener('click', (e) => {
         e.preventDefault();
         closeRuleDialog();
     });
@@ -294,14 +310,8 @@ document.addEventListener('DOMContentLoaded', () => {
     ruleForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const { data, index } = getRuleFormData();
-
-        // 1. Update the local cache and re-render the table immediately for responsiveness
         saveRuleToCache(data, index);
-
-        // 2. Assemble the complete routing settings payload
         const routingSettingsPayload = getRoutingSettingsData();
-
-        // 3. Save the entire routing configuration to the backend
         try {
             updateStatusMessage('Saving rule to server...');
             await saveSettings('routing', routingSettingsPayload);
@@ -309,33 +319,23 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (error) {
             alert('Error saving rule to server: ' + error.message);
             updateStatusMessage('Failed to save rule.', 'failed');
-            // On failure, we might want to reload settings from the server to ensure consistency
             loadSettings();
-            return; // Don't close the dialog on error
+            return;
         }
-
-        // 4. Close the dialog on success
         closeRuleDialog();
     });
 
-    // 应用变更按钮的事件监听器
-    applyChangesBtn.addEventListener('click', async () => {
+     applyChangesBtn.addEventListener('click', async () => {
         applyChangesBtn.textContent = 'Applying...';
         applyChangesBtn.disabled = true;
-
         try {
             updateStatusMessage('Applying changes on the server...');
-            await applyChanges(); // 只调用 POST /api/apply_changes
-
+            await applyChanges();
             hideApplyBanner();
             updateStatusMessage('Changes are being applied. Refreshing state...');
-
-            // 稍等片刻后，重新获取状态，以确保与后端同步
             setTimeout(() => {
-                // fetchServers(); // 不需要，因为配置没变
-                fetchStatus();  // 只需要获取最新的运行时状态
-            }, 1500); // 延长等待时间以确保后端有足够时间处理
-
+                fetchStatus();
+            }, 1500);
         } catch (error) {
             alert('Error applying changes: ' + error.message);
             updateStatusMessage('Failed to apply changes.', 'failed');
@@ -345,11 +345,53 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+         // --- 新增: 代理池导入对话框的事件监听器 ---
+    showImportDialogBtn.addEventListener('click', () => {
+        importProxyForm.reset();
+        importProxyDialog.showModal();
+    });
+
+    cancelImportBtn.addEventListener('click', () => {
+        importProxyDialog.close();
+    });
+
+    importProxyForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const importBtn = importProxyForm.querySelector('button[type="submit"]');
+        const importListTextarea = document.getElementById('import-proxy-list');
+        const importProtocolSelect = document.getElementById('import-proxy-protocol');
+
+        const proxyListRaw = importListTextarea.value.trim();
+        if (!proxyListRaw) {
+            alert('Proxy list cannot be empty.');
+            return;
+        }
+
+        const proxyList = proxyListRaw.split('\n').map(p => p.trim()).filter(Boolean);
+        const protocol = importProtocolSelect.value;
+
+        importBtn.textContent = 'Importing...';
+        importBtn.disabled = true;
+
+        try {
+            await importProxies(protocol, proxyList);
+            updateStatusMessage(`Successfully submitted ${proxyList.length} proxies for validation. The list will refresh shortly.`);
+            importProxyDialog.close();
+        } catch (error) {
+            alert('Error importing proxies: ' + error.message);
+            updateStatusMessage('Failed to import proxies.', 'failed');
+        } finally {
+            importBtn.textContent = 'Import and Validate';
+            importBtn.disabled = false;
+        }
+    });
+
     // --- Initial Load ---
     initializeSettingsPage(); // 初始化设置页面的事件监听器
     initializeFirewallPage(); // 初始化防火墙页面的事件监听器
     initializeMonitorPage();
     initializeDashboardPage();
+    initializeProxyPoolPage();
     showPage('dashboard'); // 默认显示服务器列表页面
 
     fetchServers();

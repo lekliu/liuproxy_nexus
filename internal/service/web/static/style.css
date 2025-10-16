@@ -27,7 +27,7 @@ body {
 }
 
 .container {
-    max-width: 1200px; /* Widened for better layout */
+    max-width: 1300px; /* Widened for better layout */
     margin: 0 auto;
     background: var(--surface-color);
     padding: 20px;
@@ -202,42 +202,48 @@ button {
     transition: background-color 0.2s ease;
 }
 
+.danger-btn {
+    background-color: var(--status-down-color);
+    color: white;
+}
+.danger-btn:hover {
+    background-color: #c82333;
+}
+
 #add-server-btn { background-color: var(--primary-color); color: white; }
 #add-server-btn:hover { background-color: #0056b3; }
 
-#add-rule-btn, #add-firewall-rule-btn {
+#add-rule-btn, #add-firewall-rule-btn, #show-import-dialog-btn {
     background-color: var(--primary-color);
     color: white;
-    padding: 8px 15px; /* Adjust padding to match filter controls height */
+    padding: 8px 15px;
 }
 
-#add-rule-btn:hover, #add-firewall-rule-btn:hover {
+#add-rule-btn:hover, #add-firewall-rule-btn:hover, #show-import-dialog-btn:hover {
     background-color: #0056b3;
 }
 
 table {
     width: 100%;
     border-collapse: collapse;
-    table-layout: fixed; /* For better column control */
 }
 
 th, td {
-    padding: 12px 10px; /* Adjusted padding */
+    padding: 12px 10px;
     text-align: left;
     border-bottom: 1px solid var(--border-color);
-    white-space: nowrap; /* Prevent wrapping */
-    overflow: hidden;
-    text-overflow: ellipsis; /* Truncate long text */
+    white-space: nowrap;
+    vertical-align: middle; /* NEW: Vertically align all cell content */
 }
 
-/* --- NEW Column Widths --- */
-th:first-child, td:first-child { width: 60px; text-align: center; } /* Status */
-th:nth-child(2), td:nth-child(2) { flex-grow: 1; min-width: 150px; } /* Remarks */
-th:nth-child(3), td:nth-child(3) { flex-grow: 1; min-width: 180px; } /* Address */
-th:nth-child(4), td:nth-child(4) { width: 100px; } /* Latency */
-th:nth-child(5), td:nth-child(5) { width: 60px; text-align: center; } /* Activity */
-th:nth-child(6), td:nth-child(6) { width: 140px; } /* Exit IP */
-th:last-child, td:last-child { width: 280px; text-align: center;} /* Actions - INCREASED WIDTH */
+/* --- Server Table Specific Styles --- */
+#server-table th:nth-child(1), #server-table td:nth-child(1) { width: 6%; text-align: center; } /* Status */
+#server-table th:nth-child(2), #server-table td:nth-child(2) { width: 20%; } /* Remarks */
+#server-table th:nth-child(3), #server-table td:nth-child(3) { width: 24%; } /* Address */
+#server-table th:nth-child(4), #server-table td:nth-child(4) { width: 8%; }  /* Latency */
+#server-table th:nth-child(5), #server-table td:nth-child(5) { width: 8%; text-align: center; }  /* Activity */
+#server-table th:nth-child(6), #server-table td:nth-child(6) { width: 12%; } /* Exit IP */
+#server-table th:nth-child(7), #server-table td:nth-child(7) { width: 22%; text-align: center; } /* Actions */
 
 tbody tr.active-row { background-color: var(--active-bg-color); }
 tbody tr.inactive-row { background-color: var(--surface-color); }
@@ -266,81 +272,41 @@ tbody tr.down-row { background-color: #f8d7da; color: #721c24; }
     font-weight: bold;
 }
 
-.actions {
+/* --- Actions Column Styles --- */
+#server-table .actions {
     white-space: nowrap;
 }
-
-.actions .action-btn-group {
-    display: flex;
-    justify-content: center;
-    gap: 8px; /* Increased gap for better spacing */
-}
-
-/* --- NEW Button Styles --- */
-.actions button {
-    background: none; /* Make background transparent */
+#server-table .actions button {
+    background: none;
     border: 1px solid var(--border-color);
     color: var(--secondary-color);
-    padding: 6px 12px; /* Adjusted padding */
-    border-radius: 5px; /* Add border radius */
+    padding: 6px 12px;
+    border-radius: 5px;
     font-weight: 500;
     cursor: pointer;
     transition: background-color 0.2s, color 0.2s;
+    margin: 0 2px;
 }
-.actions button:hover {
+#server-table .actions button:hover {
     background-color: #f1f1f1;
 }
 
-.actions .primary-action { /* Activate button */
+#server-table .actions .primary-action { /* Activate button */
     color: var(--primary-color);
     border-color: var(--primary-color);
 }
-.actions .primary-action:hover {
+#server-table .actions .primary-action:hover {
     background-color: #e7f1ff;
 }
 
-.actions .deactivate-btn { /* Deactivate button */
+#server-table .actions .deactivate-btn { /* Deactivate button */
     color: #dc3545;
     border-color: #dc3545;
 }
-.actions .deactivate-btn:hover {
+#server-table .actions .deactivate-btn:hover {
     background-color: #f8d7da;
 }
 
-/* --- More Actions Menu --- */
-.more-actions {
-    position: relative;
-    display: inline-block;
-}
-.more-actions-btn {
-    font-size: 1.2em;
-    padding: 6px;
-}
-.more-actions-menu {
-    display: none;
-    position: absolute;
-    right: 0;
-    top: 100%;
-    background-color: var(--surface-color);
-    border: 1px solid var(--border-color);
-    border-radius: 5px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    z-index: 10;
-    min-width: 100px;
-}
-.more-actions-menu a {
-    display: block;
-    padding: 8px 12px;
-    text-decoration: none;
-    color: var(--text-color);
-    font-size: 0.9em;
-}
-.more-actions-menu a:hover {
-    background-color: var(--background-color);
-}
-.more-actions.active .more-actions-menu {
-    display: block;
-}
 
 /* --- Activity Indicator Styles --- */
 .activity-container {
@@ -517,4 +483,64 @@ form input, form select {
 
 .action-allow {
     color: var(--status-up-color);
+}
+
+/* --- Proxy Pool Specific Styles --- */
+#proxy-pool-table .checkbox-col { width: 40px; text-align: center; }
+#proxy-pool-table th:nth-child(2), #proxy-pool-table td:nth-child(2) { width: 60px; text-align: center; } /* Status */
+#proxy-pool-table th:nth-child(3), #proxy-pool-table td:nth-child(3) { width: 80px; }  /* Protocol */
+#proxy-pool-table th:nth-child(4), #proxy-pool-table td:nth-child(4) { width: 180px; } /* Address */
+#proxy-pool-table th:nth-child(5), #proxy-pool-table td:nth-child(5) { width: 100px; } /* Latency */
+#proxy-pool-table th:nth-child(6), #proxy-pool-table td:nth-child(6) { width: 80px; text-align: center; }  /* Success */
+#proxy-pool-table th:nth-child(7), #proxy-pool-table td:nth-child(7) { width: 80px; text-align: center; }  /* Failures */
+#proxy-pool-table th:nth-child(8), #proxy-pool-table td:nth-child(8) { width: 200px; } /* Country / Region */
+#proxy-pool-table th:nth-child(9), #proxy-pool-table td:nth-child(9) { width: 120px; overflow: hidden; text-overflow: ellipsis; } /* In Use By (can be truncated) */
+#proxy-pool-table th:nth-child(10),#proxy-pool-table td:nth-child(10){ width: 180px; } /* Last Checked */
+
+#proxy-pool-table .status-in-use {
+    color: var(--status-up-color);
+    font-weight: bold;
+}
+
+#proxy-pool-table .status-idle {
+    color: var(--secondary-color);
+}
+
+.error-message {
+    color: var(--status-down-color);
+    text-align: center;
+    font-style: italic;
+}
+
+.pagination-controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 20px;
+    gap: 5px;
+}
+.pagination-controls button,
+.pagination-controls span {
+    padding: 8px 12px;
+    border: 1px solid var(--border-color);
+    background-color: var(--surface-color);
+    border-radius: 5px;
+    cursor: pointer;
+}
+.pagination-controls button:hover {
+    background-color: #e9ecef;
+}
+.pagination-controls button.active {
+    background-color: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+    cursor: default;
+}
+.pagination-controls button:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+.pagination-controls span {
+    cursor: default;
+    border: none;
 }

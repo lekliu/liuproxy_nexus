@@ -11,30 +11,12 @@
   "routing": {
     "rules": [
       {
-        "priority": 34,
+        "priority": 99,
         "type": "domain",
         "value": [
-          "baidu.com",
-          "pss.bdstatic.com",
-          "himg.bdimg.com"
+          "baifi.com"
         ],
         "target": "DIRECT"
-      },
-      {
-        "priority": 1,
-        "type": "source_ip",
-        "value": [
-          "192.148.3.3"
-        ],
-        "target": "cloudflare"
-      },
-      {
-        "priority": 65,
-        "type": "source_ip",
-        "value": [
-          "127.0.0.1"
-        ],
-        "target": "5108"
       }
     ]
   },
